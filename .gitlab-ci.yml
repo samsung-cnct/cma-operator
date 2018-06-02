@@ -14,6 +14,6 @@ build:branch:
     - docker info
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
   script:
-    - docker build -t $IMAGE_URI -f build/docker/cluster-manager-api/Dockerfile .
+    - docker build -t $IMAGE_URI -f build/docker/cma-operator/Dockerfile .
     - docker push $IMAGE_URI
 
