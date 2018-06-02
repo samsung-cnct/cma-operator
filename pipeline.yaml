@@ -1,0 +1,14 @@
+type: chart
+builds:
+  - image: samsung_cnct/cma-operator
+    context: cma-operator
+    chart: cma-operator
+    value: image.repo
+    dockerContext: .
+deployments:
+  - chart: cma-operator
+    timeout: 600
+    retries: 2
+    release: cma-operator
+prod:
+  doDeploy: none
