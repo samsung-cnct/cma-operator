@@ -11,3 +11,5 @@ public/assets/
 .env
 main
 .testCoverage.txt
+cma-operator
+!**/cma-operator/
