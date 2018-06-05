@@ -98,16 +98,15 @@ func NewSDSApplicationController(config *rest.Config) (output *SDSApplicationCon
 				queue.Add(key)
 			}
 		},
-	},30*time.Second)
-
+	}, 30*time.Second)
 
 	output = &SDSApplicationController{
 		informer: sharedInformer,
 		indexer:  sharedInformer.GetIndexer(),
 		//informer: informer,
 		//indexer:  indexer,
-		queue:    queue,
-		client:   client,
+		queue:  queue,
+		client: client,
 	}
 	output.SetLogger()
 	return
