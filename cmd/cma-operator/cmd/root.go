@@ -7,20 +7,19 @@ import (
 	"github.com/samsung-cnct/cma-operator/pkg/util/k8sutil"
 	"github.com/spf13/viper"
 
+	"flag"
+	"fmt"
 	"github.com/juju/loggo"
 	ccworkqueue "github.com/samsung-cnct/cma-operator/pkg/controllers/kraken-cluster"
-	"github.com/samsung-cnct/cma-operator/pkg/controllers/sdsapplication"
 	"github.com/samsung-cnct/cma-operator/pkg/controllers/sds-cluster"
 	"github.com/samsung-cnct/cma-operator/pkg/controllers/sds-package-manager"
+	"github.com/samsung-cnct/cma-operator/pkg/controllers/sdsapplication"
 	"github.com/samsung-cnct/cma-operator/pkg/util/cma"
+	"github.com/spf13/cobra"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/client-go/rest"
-	"github.com/spf13/cobra"
-	"fmt"
 	"os"
 	"strings"
-	"flag"
-	"github.com/spf13/pflag"
 )
 
 var (
@@ -30,7 +29,7 @@ var (
 	rootCmd = &cobra.Command{
 		Use:   "operator",
 		Short: "CMA Operator",
-		Long: `The CMA Operator`,
+		Long:  `The CMA Operator`,
 		Run: func(cmd *cobra.Command, args []string) {
 			operator()
 		},
@@ -38,21 +37,16 @@ var (
 )
 
 func init() {
-
-
-	viper.SetEnvPrefix("clustermanagerapi")
+	viper.SetEnvPrefix("cmaoperator")
 	replacer := strings.NewReplacer("-", "_")
 	viper.SetEnvKeyReplacer(replacer)
 
-	// using standard library "flag" package
-	flag.String("kubeconfig", "", "Location of kubeconfig file")
+	rootCmd.Flags().String("kubeconfig", "", "Location of kubeconfig file")
 
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-	pflag.Parse()
-	viper.BindPFlags(pflag.CommandLine)
-	rootCmd.Flags().AddGoFlagSet(flag.CommandLine)
+	viper.BindPFlag("kubeconfig", rootCmd.Flags().Lookup("kubeconfig"))
 
 	viper.AutomaticEnv()
+	rootCmd.Flags().AddGoFlagSet(flag.CommandLine)
 }
 
 func Execute() {
