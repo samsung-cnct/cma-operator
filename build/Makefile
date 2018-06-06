@@ -2,6 +2,7 @@ GOCMD=go
 GOBUILD=$(GOCMD) build
 GOGET=$(GOCMD) get
 GOTEST=$(GOCMD) test
+GOINSTALL=$(GOCMD) install
 DEPCMD=dep
 
 # Variables for binary version information
@@ -39,6 +40,20 @@ container-build: install-dep dep-ensure cma-bin-linux-amd64
 # Clean will clean up dep and remove any binaries
 clean: remove-binary
 
+# Installs the required tools
+install-tools: install-dep
+	$(GOGET) k8s.io/code-generator/cmd/client-gen
+	$(GOINSTALL) k8s.io/code-generator/cmd/client-gen
+	$(GOINSTALL) k8s.io/code-generator/cmd/conversion-gen
+	$(GOINSTALL) k8s.io/code-generator/cmd/deepcopy-gen
+	$(GOINSTALL) k8s.io/code-generator/cmd/defaulter-gen
+	$(GOINSTALL) k8s.io/code-generator/cmd/go-to-protobuf
+	$(GOINSTALL) k8s.io/code-generator/cmd/import-boss
+	$(GOINSTALL) k8s.io/code-generator/cmd/informer-gen
+	$(GOINSTALL) k8s.io/code-generator/cmd/lister-gen
+	$(GOINSTALL) k8s.io/code-generator/cmd/openapi-gen
+	$(GOINSTALL) k8s.io/code-generator/cmd/set-gen
+
 # Install dep will install dep in $GOROOT/bin
 install-dep:
 	go get -u github.com/golang/dep/cmd/dep
@@ -67,3 +82,5 @@ cma-bin-linux-amd64:
 # Delete an existing binary / cleanup
 remove-binary:
 	rm ${CMA_BINARY_NAME}
+
+
