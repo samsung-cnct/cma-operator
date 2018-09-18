@@ -2,6 +2,7 @@ package sds_cluster
 
 import (
 	"fmt"
+	"github.com/samsung-cnct/cma-operator/pkg/util/cmagrpc"
 	"time"
 
 	"k8s.io/apimachinery/pkg/fields"
@@ -13,7 +14,6 @@ import (
 	"github.com/samsung-cnct/cma-operator/pkg/layouts"
 	"github.com/samsung-cnct/cma-operator/pkg/layouts/poc"
 	"github.com/samsung-cnct/cma-operator/pkg/util"
-	"github.com/samsung-cnct/cma-operator/pkg/util/ccutil"
 	"github.com/samsung-cnct/cma-operator/pkg/util/cma"
 	"github.com/samsung-cnct/cma-operator/pkg/util/k8sutil"
 	"k8s.io/apimachinery/pkg/util/runtime"
@@ -32,10 +32,15 @@ type SDSClusterController struct {
 	queue    workqueue.RateLimitingInterface
 	informer cache.Controller
 
-	client *versioned.Clientset
+	client        *versioned.Clientset
+	cmaGRPCClient cmagrpc.ClientInterface
 }
 
-func NewSDSClusterController(config *rest.Config) *SDSClusterController {
+func NewSDSClusterController(config *rest.Config) (*SDSClusterController, error) {
+	cmaGRPCClient, err := cmagrpc.CreateNewDefaultClient()
+	if err != nil {
+		return nil, err
+	}
 	if config == nil {
 		config = k8sutil.DefaultConfig
 	}
@@ -79,13 +84,14 @@ func NewSDSClusterController(config *rest.Config) *SDSClusterController {
 	}, cache.Indexers{})
 
 	output := &SDSClusterController{
-		informer: informer,
-		indexer:  indexer,
-		queue:    queue,
-		client:   client,
+		informer:      informer,
+		indexer:       indexer,
+		queue:         queue,
+		client:        client,
+		cmaGRPCClient: cmaGRPCClient,
 	}
 	output.SetLogger()
-	return output
+	return output, nil
 }
 
 func (c *SDSClusterController) processNextItem() bool {
@@ -124,14 +130,12 @@ func (c *SDSClusterController) proxessItem(key string) error {
 
 		switch sdsCluster.Status.Phase {
 		case api.ClusterPhaseNone, api.ClusterPhasePending:
-			c.deployKrakenCluster(sdsCluster)
 		case api.ClusterPhaseHaveCluster:
 			c.deployPackageManager(sdsCluster)
 		case api.ClusterPhaseHavePackageManager:
 			c.deployApplications(sdsCluster)
 		}
 		if sdsCluster.Status.ClusterBuilt != true {
-			c.deployKrakenCluster(sdsCluster)
 		} else if sdsCluster.Status.TillerInstalled != true {
 			c.deployPackageManager(sdsCluster)
 		} else if sdsCluster.Status.AppsInstalled != true {
@@ -197,45 +201,6 @@ func (c *SDSClusterController) runWorker() {
 
 func (c *SDSClusterController) SetLogger() {
 	logger = util.GetModuleLogger("pkg.controllers.sds_cluster", loggo.INFO)
-}
-
-func (c *SDSClusterController) deployKrakenCluster(sdsCluster *api.SDSCluster) {
-	clusterName := sdsCluster.GetName()
-	krakenCluster := ccutil.GenerateKrakenCluster(
-		ccutil.KrakenClusterOptions{
-			Name:     clusterName,
-			Provider: sdsCluster.Spec.Provider.Name,
-			MaaS: ccutil.MaaSOptions{
-				Endpoint: sdsCluster.Spec.Provider.MaaS.Endpoint,
-				Username: sdsCluster.Spec.Provider.MaaS.Username,
-				OAuthKey: sdsCluster.Spec.Provider.MaaS.OAuthKey,
-			},
-			AWS: ccutil.AWSOptions{
-				Region:          sdsCluster.Spec.Provider.AWS.Region,
-				SecretKeyId:     sdsCluster.Spec.Provider.AWS.SecretKeyId,
-				SecretAccessKey: sdsCluster.Spec.Provider.AWS.SecretAccessKey,
-			},
-		},
-	)
-	krakenCluster.Labels = make(map[string]string)
-	krakenCluster.Labels["SDSCluster"] = string(sdsCluster.ObjectMeta.UID)
-
-	_, err := ccutil.CreateKrakenCluster(krakenCluster, "default", nil)
-	if (err != nil) && (!k8sutil.IsResourceAlreadyExistsError(err)) {
-		logger.Infof("Could not create kraken cluster")
-		sdsCluster.Status.Phase = api.ClusterPhasePending
-		_, err = c.client.CmaV1alpha1().SDSClusters(sdsCluster.Namespace).Update(sdsCluster)
-		if err != nil {
-			logger.Infof("Could not update SDSCluster to Pending status, error was: %s", err)
-		}
-		return
-	}
-
-	sdsCluster.Status.Phase = api.ClusterPhaseWaitingForCluster
-	_, err = c.client.CmaV1alpha1().SDSClusters(sdsCluster.Namespace).Update(sdsCluster)
-	if err != nil {
-		logger.Infof("Failed to request a KrakenCluster CR, error was: %s", err)
-	}
 }
 
 func (c *SDSClusterController) deployPackageManager(sdsCluster *api.SDSCluster) {

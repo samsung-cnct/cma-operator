@@ -10,13 +10,13 @@ import (
 	"flag"
 	"fmt"
 	"github.com/juju/loggo"
-	ccworkqueue "github.com/samsung-cnct/cma-operator/pkg/controllers/kraken-cluster"
 	"github.com/samsung-cnct/cma-operator/pkg/controllers/sds-cluster"
 	"github.com/samsung-cnct/cma-operator/pkg/controllers/sds-package-manager"
 	"github.com/samsung-cnct/cma-operator/pkg/controllers/sdsapplication"
 	"github.com/samsung-cnct/cma-operator/pkg/util/cma"
 	"github.com/spf13/cobra"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 	"k8s.io/client-go/rest"
 	"os"
 	"strings"
@@ -42,8 +42,12 @@ func init() {
 	viper.SetEnvKeyReplacer(replacer)
 
 	rootCmd.Flags().String("kubeconfig", "", "Location of kubeconfig file")
+	rootCmd.Flags().String("cma-endpoint", "", "Location of the Cluster Manager API GRPC service")
+	rootCmd.Flags().Bool("cma-insecure", true, "If we are not connecting to Cluster Manager API GRPC service over HTTPS")
 
 	viper.BindPFlag("kubeconfig", rootCmd.Flags().Lookup("kubeconfig"))
+	viper.BindPFlag("cma-endpoint", rootCmd.Flags().Lookup("cma-endpoint"))
+	viper.BindPFlag("cma-insecure", rootCmd.Flags().Lookup("cma-insecure"))
 
 	viper.AutomaticEnv()
 	rootCmd.Flags().AddGoFlagSet(flag.CommandLine)
@@ -86,14 +90,27 @@ func operator() {
 	stop := make(chan struct{})
 
 	logger.Infof("Starting the SDSCluster Controller")
-	sdsClusterController := sds_cluster.NewSDSClusterController(nil)
+	sdsClusterController, err := sds_cluster.NewSDSClusterController(nil)
+	if err != nil {
+		logger.Criticalf("Could not create a sdsClusterController")
+		os.Exit(-1)
+	}
+	sdsPackageManagerController, err := sds_package_manager.NewSDSPackageManagerController(nil)
+	if err != nil {
+		logger.Criticalf("Could not create a sdsPackageManagerController")
+		os.Exit(-1)
+	}
+	sdsApplicationController, err := sdsapplication.NewSDSApplicationController(nil)
+	if err != nil {
+		logger.Criticalf("Could not create a sdsPackageManagerController")
+		os.Exit(-1)
+	}
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		sdsClusterController.Run(3, stop)
 	}()
 
-	sdsPackageManagerController := sds_package_manager.NewSDSPackageManagerController(nil)
 	// Start the SDSPackageManager Controller
 	wg.Add(1)
 	go func() {
@@ -102,19 +119,11 @@ func operator() {
 	}()
 	// TODO: Start the SDSApplication Controller
 
-	sdsApplicationController := sdsapplication.NewSDSApplicationController(nil)
 	// Start the SDSPackageManager Controller
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		sdsApplicationController.Run(3, stop)
-	}()
-
-	logger.Infof("Starting KrakenCluster Watcher")
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		ccworkqueue.ListenToKrakenClusterChanges(nil)
 	}()
 
 	<-stop
