@@ -49,6 +49,8 @@ type SDSApplicationSpec struct {
 	Chart Chart `json:"chart"`
 	// What are the values for the Values.yaml file?
 	Values string `json:"values"`
+	// What are the values for the Values.yaml file?
+	Cluster SDSClusterRef `json:"cluster"`
 }
 
 // Chart represents a SDS Application's Chart information

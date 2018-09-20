@@ -165,6 +165,7 @@ func (in *SDSApplicationSpec) DeepCopyInto(out *SDSApplicationSpec) {
 	*out = *in
 	out.PackageManager = in.PackageManager
 	in.Chart.DeepCopyInto(&out.Chart)
+	out.Cluster = in.Cluster
 	return
 }
 
