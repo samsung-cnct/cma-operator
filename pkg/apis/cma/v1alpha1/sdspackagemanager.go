@@ -58,6 +58,8 @@ type SDSPackageManagerSpec struct {
 	ServiceAccount ServiceAccount `json:"serviceAccount"`
 	// Permissions of the Package Manager
 	Permissions PackageManagerPermissions `json:"permissions"`
+	// What are the values for the Values.yaml file?
+	Cluster SDSClusterRef `json:"cluster"`
 }
 
 // PackageManagerPermissions represents the permissions for the package manager

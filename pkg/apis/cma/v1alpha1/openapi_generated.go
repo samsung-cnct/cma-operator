@@ -640,12 +640,18 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 								Ref:         ref("github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.PackageManagerPermissions"),
 							},
 						},
+						"cluster": {
+							SchemaProps: spec.SchemaProps{
+								Description: "What are the values for the Values.yaml file?",
+								Ref:         ref("github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.SDSClusterRef"),
+							},
+						},
 					},
-					Required: []string{"namespace", "name", "version", "image", "serviceAccount", "permissions"},
+					Required: []string{"namespace", "name", "version", "image", "serviceAccount", "permissions", "cluster"},
 				},
 			},
 			Dependencies: []string{
-				"github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.PackageManagerPermissions", "github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.ServiceAccount"},
+				"github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.PackageManagerPermissions", "github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.SDSClusterRef", "github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.ServiceAccount"},
 		},
 		"github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.SDSPackageManagerStatus": {
 			Schema: spec.Schema{

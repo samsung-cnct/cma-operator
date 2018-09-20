@@ -396,6 +396,7 @@ func (in *SDSPackageManagerSpec) DeepCopyInto(out *SDSPackageManagerSpec) {
 	*out = *in
 	out.ServiceAccount = in.ServiceAccount
 	in.Permissions.DeepCopyInto(&out.Permissions)
+	out.Cluster = in.Cluster
 	return
 }
 
