@@ -304,11 +304,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:e5368b027ae516ef18feb4786315a8039420c7f7eed70843a844b62755182add"
+  digest = "1:001bf34d5231af69cf10e3942d6620fd99ab1d48c457d56e5691d7f8443fc75e"
   name = "github.com/samsung-cnct/cluster-manager-api"
   packages = ["pkg/generated/api"]
   pruneopts = "UT"
-  revision = "9a835154bd38695bc9db8ed5d61f550b202b0b38"
+  revision = "e0e063df01beada3dad59b5f913a708617c6b718"
 
 [[projects]]
   digest = "1:6a4a11ba764a56d2758899ec6f3848d24698d48442ebce85ee7a3f63284526cd"
@@ -399,14 +399,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:374fc90fcb026e9a367e3fad29e988e5dd944b68ca3f24a184d77abc5307dda4"
+  digest = "1:49edbccdd6fb213dcf45486b0c939b788740451e5f2ff77aa42ca742d10da449"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "d0be0721c37eeb5299f245a996a483160fc36940"
+  revision = "1561086e645b2809fb9f8a1e2a38160bf8d53bf4"
 
 [[projects]]
   digest = "1:0c56024909189aee3364b7f21a95a27459f718aa7c199a5c111c36cfffd9eaef"
@@ -441,7 +441,7 @@
   revision = "fbb02b2291d28baffd63558aa44b4b56f178d650"
 
 [[projects]]
-  digest = "1:328b5e4f197d928c444a51a75385f4b978915c0e75521f0ad6a3db976c97a7d3"
+  digest = "1:6247f76e55a1e1a5c19a81e2d4b4dff6730461eeb5bbb0a16dd4a8ec8637ee93"
   name = "google.golang.org/appengine"
   packages = [
     "internal",
@@ -453,19 +453,19 @@
     "urlfetch",
   ]
   pruneopts = "UT"
-  revision = "b1f26356af11148e710935ed1ac8a7f5702c7612"
-  version = "v1.1.0"
+  revision = "ae0ab99deb4dc413a2b4bd6c8bdd0eb67f1e4d06"
+  version = "v1.2.0"
 
 [[projects]]
   branch = "master"
-  digest = "1:42448f154e7d40907ae03cbdf99dbcfa3feb927c4521e0f01c52c6142e4891d5"
+  digest = "1:ec1919b8b80839559effbe3eabcebf92238d12d3dd9182e51deb5da3ed12e5e9"
   name = "google.golang.org/genproto"
   packages = [
     "googleapis/api/annotations",
     "googleapis/rpc/status",
   ]
   pruneopts = "UT"
-  revision = "4b56f30a1fd96a133a036b62cdd2a249883dd89b"
+  revision = "c3f76f3b92d1ffa4c58a9ff842a58b8877655e0f"
 
 [[projects]]
   digest = "1:ab8e92d746fb5c4c18846b0879842ac8e53b3d352449423d0924a11f1020ae1b"

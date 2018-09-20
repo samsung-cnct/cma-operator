@@ -5,14 +5,13 @@ import (
 )
 
 const (
-	ClusterPhaseNone                    = ""
-	ClusterPhasePending                 = "Pending"
-	ClusterPhaseWaitingForCluster       = "Waiting for cluster"
-	ClusterPhaseHaveCluster             = "Cluster created"
-	ClusterPhaseDeployingPackageManager = "Deploying Package Manager"
-	ClusterPhaseHavePackageManager      = "Package Manager Installed"
-	ClusterPhaseDeployingApplications   = "Deploying Applications"
-	ClusterPhaseReady                   = "Ready"
+	ClusterPhaseNone              = ""
+	ClusterPhasePending           = "Pending"
+	ClusterPhaseWaitingForCluster = "Waiting for cluster"
+	ClusterPhaseUpgrading         = "Deploying Applications"
+	ClusterPhaseDeleting          = "Deleting cluster"
+	ClusterPhaseReady             = "Ready"
+	ClusterPhaseFailed            = "Failed"
 )
 
 // SDSDClusterList is a list of sds clusters.
@@ -39,47 +38,8 @@ type SDSCluster struct {
 // SDSClusterSpec represents a SDSCluster spec
 // +k8s:openapi-gen=true
 type SDSClusterSpec struct {
-	// What is the layout for this SDSCluster
-	Layout string `json:"layout"`
 	// What provider
-	Provider ProviderSpec `json:"provider,omitempty"`
-	// What package manager should be used
-	PackageManager SDSPackageManagerSpec `json:"packageManager"`
-	// What Charts should be installed
-	Applications []SDSApplicationSpec `json:"applications,omitempty"`
-}
-
-// ProviderSpec represents a provider spec
-// +k8s:openapi-gen=true
-type ProviderSpec struct {
-	// What type of provider
-	Name string `json:"name,omitempty"`
-	// The AWS Spec
-	AWS AWSSpec `json:"aws,omitempty"`
-	// The MaaS Spec
-	MaaS MaaSSpec `json:"maas,omitempty"`
-}
-
-// AWSSpec represents an aws spec
-// +k8s:openapi-gen=true
-type AWSSpec struct {
-	// The API secret key id
-	SecretKeyId string `json:"secretKeyId, omitempty"`
-	// The API secret access key
-	SecretAccessKey string `json:"secretAccessKey, omitempty"`
-	// The region
-	Region string `json:"region, omitempty"`
-}
-
-// MaaSSpec represents a maas spec
-// +k8s:openapi-gen=true
-type MaaSSpec struct {
-	// The MaaS endpoint
-	Endpoint string `json:"endpoint, omitempty"`
-	// The username
-	Username string `json:"username, omitempty"`
-	// The OAuth key
-	OAuthKey string `json:"oauthKey, omitempty"`
+	Provider string `json:"provider,omitempty"`
 }
 
 // SDSClusterStatus has the status of the system

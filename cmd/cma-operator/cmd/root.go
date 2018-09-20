@@ -42,10 +42,12 @@ func init() {
 	viper.SetEnvKeyReplacer(replacer)
 
 	rootCmd.Flags().String("kubeconfig", "", "Location of kubeconfig file")
+	rootCmd.Flags().String("kubernetes-namespace", "default", "Namespace to operate on")
 	rootCmd.Flags().String("cma-endpoint", "", "Location of the Cluster Manager API GRPC service")
 	rootCmd.Flags().Bool("cma-insecure", true, "If we are not connecting to Cluster Manager API GRPC service over HTTPS")
 
 	viper.BindPFlag("kubeconfig", rootCmd.Flags().Lookup("kubeconfig"))
+	viper.BindPFlag("kubernetes-namespace", rootCmd.Flags().Lookup("kubernetes-namespace"))
 	viper.BindPFlag("cma-endpoint", rootCmd.Flags().Lookup("cma-endpoint"))
 	viper.BindPFlag("cma-insecure", rootCmd.Flags().Lookup("cma-insecure"))
 

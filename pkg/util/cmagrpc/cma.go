@@ -59,7 +59,7 @@ func (a *Client) SetClient(client pb.ClusterClient) {
 func (a *Client) GetCluster(input GetClusterInput) (GetClusterOutput, error) {
 	result, err := a.client.GetCluster(context.Background(), &pb.GetClusterMsg{
 		Name:     input.Name,
-		Provider: input.Provider,
+		Provider: pb.Provider(pb.Provider_value[input.Provider]),
 	})
 	if err != nil {
 		return GetClusterOutput{}, err

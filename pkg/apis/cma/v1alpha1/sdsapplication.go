@@ -58,6 +58,8 @@ type Chart struct {
 	Name string `json:"chartName"`
 	// What is the repository information
 	Repository ChartRepository `json:"repository"`
+	// The Chart payload in case repository is not available
+	ChartPayload []byte `json:"chartPayload"`
 	// What is the chart version
 	Version string `json:"version"`
 }

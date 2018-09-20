@@ -15,7 +15,6 @@ import (
 	api "github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1"
 	"github.com/samsung-cnct/cma-operator/pkg/generated/cma/client/clientset/versioned"
 	"github.com/samsung-cnct/cma-operator/pkg/util"
-	"github.com/samsung-cnct/cma-operator/pkg/util/cma"
 	"github.com/samsung-cnct/cma-operator/pkg/util/helmutil"
 	"github.com/samsung-cnct/cma-operator/pkg/util/k8sutil"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -296,7 +295,7 @@ func (c *SDSPackageManagerController) waitForTiller(packageManager *api.SDSPacka
 				_, err = c.client.CmaV1alpha1().SDSPackageManagers(packageManager.Namespace).Update(packageManager)
 				if err == nil {
 					logger.Infof("Tiller running on -->%s<--", packageManager.Spec.Name)
-					c.updateSDSCluster(packageManager)
+					c.handleHavingPackageManager(packageManager)
 				} else {
 					logger.Infof("Could not update the status error was %s", err)
 				}
@@ -309,30 +308,6 @@ func (c *SDSPackageManagerController) waitForTiller(packageManager *api.SDSPacka
 	return false, nil
 }
 
-func (c *SDSPackageManagerController) updateSDSCluster(packageManager *api.SDSPackageManager) (result bool, err error) {
-	// TODO This is dubious, but for the PoC, good enough
-	sdsCluster, err := cma.GetSDSCluster(packageManager.Spec.Name, "default", nil)
-	if err != nil {
-		logger.Infof("Failed to get SDSCluster for SDSPackageManager %s, error was: ", packageManager.Spec.Name, err)
-	}
+func (c *SDSPackageManagerController) handleHavingPackageManager(packageManager *api.SDSPackageManager) {
 
-	changes := false
-	if sdsCluster.Status.TillerInstalled == false {
-		changes = true
-		sdsCluster.Status.TillerInstalled = true
-	}
-	switch sdsCluster.Status.Phase {
-	case api.ClusterPhaseWaitingForCluster, api.ClusterPhaseNone, api.ClusterPhasePending, api.ClusterPhaseHaveCluster, api.ClusterPhaseDeployingPackageManager:
-		changes = true
-		sdsCluster.Status.Phase = api.ClusterPhaseHavePackageManager
-	}
-
-	if changes {
-		_, err = cma.UpdateSDSCluster(sdsCluster, sdsCluster.Namespace, nil)
-		if err != nil {
-			logger.Infof("Could not update SDSCluster for KrakenCluster %s, error was: ", sdsCluster.Name, err)
-		}
-	}
-
-	return true, nil
 }

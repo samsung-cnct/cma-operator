@@ -30,37 +30,6 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.AWSSpec": {
-			Schema: spec.Schema{
-				SchemaProps: spec.SchemaProps{
-					Description: "AWSSpec represents an aws spec",
-					Properties: map[string]spec.Schema{
-						"secretKeyId": {
-							SchemaProps: spec.SchemaProps{
-								Description: "The API secret key id",
-								Type:        []string{"string"},
-								Format:      "",
-							},
-						},
-						"secretAccessKey": {
-							SchemaProps: spec.SchemaProps{
-								Description: "The API secret access key",
-								Type:        []string{"string"},
-								Format:      "",
-							},
-						},
-						"region": {
-							SchemaProps: spec.SchemaProps{
-								Description: "The region",
-								Type:        []string{"string"},
-								Format:      "",
-							},
-						},
-					},
-				},
-			},
-			Dependencies: []string{},
-		},
 		"github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.Chart": {
 			Schema: spec.Schema{
 				SchemaProps: spec.SchemaProps{
@@ -79,6 +48,13 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 								Ref:         ref("github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.ChartRepository"),
 							},
 						},
+						"chartPayload": {
+							SchemaProps: spec.SchemaProps{
+								Description: "The Chart payload in case repository is not available",
+								Type:        []string{"string"},
+								Format:      "byte",
+							},
+						},
 						"version": {
 							SchemaProps: spec.SchemaProps{
 								Description: "What is the chart version",
@@ -87,7 +63,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 							},
 						},
 					},
-					Required: []string{"chartName", "repository", "version"},
+					Required: []string{"chartName", "repository", "chartPayload", "version"},
 				},
 			},
 			Dependencies: []string{
@@ -147,37 +123,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 			},
 			Dependencies: []string{},
 		},
-		"github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.MaaSSpec": {
-			Schema: spec.Schema{
-				SchemaProps: spec.SchemaProps{
-					Description: "MaaSSpec represents a maas spec",
-					Properties: map[string]spec.Schema{
-						"endpoint": {
-							SchemaProps: spec.SchemaProps{
-								Description: "The MaaS endpoint",
-								Type:        []string{"string"},
-								Format:      "",
-							},
-						},
-						"username": {
-							SchemaProps: spec.SchemaProps{
-								Description: "The username",
-								Type:        []string{"string"},
-								Format:      "",
-							},
-						},
-						"oauthKey": {
-							SchemaProps: spec.SchemaProps{
-								Description: "The OAuth key",
-								Type:        []string{"string"},
-								Format:      "",
-							},
-						},
-					},
-				},
-			},
-			Dependencies: []string{},
-		},
 		"github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.PackageManagerPermissions": {
 			Schema: spec.Schema{
 				SchemaProps: spec.SchemaProps{
@@ -209,36 +154,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 				},
 			},
 			Dependencies: []string{},
-		},
-		"github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.ProviderSpec": {
-			Schema: spec.Schema{
-				SchemaProps: spec.SchemaProps{
-					Description: "ProviderSpec represents a provider spec",
-					Properties: map[string]spec.Schema{
-						"name": {
-							SchemaProps: spec.SchemaProps{
-								Description: "What type of provider",
-								Type:        []string{"string"},
-								Format:      "",
-							},
-						},
-						"aws": {
-							SchemaProps: spec.SchemaProps{
-								Description: "The AWS Spec",
-								Ref:         ref("github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.AWSSpec"),
-							},
-						},
-						"maas": {
-							SchemaProps: spec.SchemaProps{
-								Description: "The MaaS Spec",
-								Ref:         ref("github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.MaaSSpec"),
-							},
-						},
-					},
-				},
-			},
-			Dependencies: []string{
-				"github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.AWSSpec", "github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.MaaSSpec"},
 		},
 		"github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.SDSApplication": {
 			Schema: spec.Schema{
@@ -512,44 +427,17 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 				SchemaProps: spec.SchemaProps{
 					Description: "SDSClusterSpec represents a SDSCluster spec",
 					Properties: map[string]spec.Schema{
-						"layout": {
+						"provider": {
 							SchemaProps: spec.SchemaProps{
-								Description: "What is the layout for this SDSCluster",
+								Description: "What provider",
 								Type:        []string{"string"},
 								Format:      "",
 							},
 						},
-						"provider": {
-							SchemaProps: spec.SchemaProps{
-								Description: "What provider",
-								Ref:         ref("github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.ProviderSpec"),
-							},
-						},
-						"packageManager": {
-							SchemaProps: spec.SchemaProps{
-								Description: "What package manager should be used",
-								Ref:         ref("github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.SDSPackageManagerSpec"),
-							},
-						},
-						"applications": {
-							SchemaProps: spec.SchemaProps{
-								Description: "What Charts should be installed",
-								Type:        []string{"array"},
-								Items: &spec.SchemaOrArray{
-									Schema: &spec.Schema{
-										SchemaProps: spec.SchemaProps{
-											Ref: ref("github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.SDSApplicationSpec"),
-										},
-									},
-								},
-							},
-						},
 					},
-					Required: []string{"layout", "packageManager"},
 				},
 			},
-			Dependencies: []string{
-				"github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.ProviderSpec", "github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.SDSApplicationSpec", "github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.SDSPackageManagerSpec"},
+			Dependencies: []string{},
 		},
 		"github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.SDSClusterStatus": {
 			Schema: spec.Schema{
@@ -727,6 +615,13 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 								Format:      "",
 							},
 						},
+						"image": {
+							SchemaProps: spec.SchemaProps{
+								Description: "What tiller image should this package manager user?",
+								Type:        []string{"string"},
+								Format:      "",
+							},
+						},
 						"serviceAccount": {
 							SchemaProps: spec.SchemaProps{
 								Description: "ServiceAccount to use",
@@ -740,7 +635,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 							},
 						},
 					},
-					Required: []string{"namespace", "name", "version", "serviceAccount", "permissions"},
+					Required: []string{"namespace", "name", "version", "image", "serviceAccount", "permissions"},
 				},
 			},
 			Dependencies: []string{

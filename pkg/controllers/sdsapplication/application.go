@@ -80,12 +80,6 @@ func (c *SDSApplicationController) updateSDSCluster(clusterName string) (result 
 		changes = true
 		sdsCluster.Status.AppsInstalled = true
 	}
-	switch sdsCluster.Status.Phase {
-	case api.ClusterPhaseHavePackageManager, api.ClusterPhaseDeployingApplications:
-		changes = true
-		sdsCluster.Status.Phase = api.ClusterPhaseReady
-	}
-
 	if changes {
 		_, err = cma.UpdateSDSCluster(sdsCluster, sdsCluster.Namespace, nil)
 		if err != nil {
