@@ -277,12 +277,18 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 								Format:      "",
 							},
 						},
+						"cluster": {
+							SchemaProps: spec.SchemaProps{
+								Description: "What are the values for the Values.yaml file?",
+								Ref:         ref("github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.SDSClusterRef"),
+							},
+						},
 					},
-					Required: []string{"packageManager", "namespace", "name", "chart", "values"},
+					Required: []string{"packageManager", "namespace", "name", "chart", "values", "cluster"},
 				},
 			},
 			Dependencies: []string{
-				"github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.Chart", "github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.SDSPackageManagerRef"},
+				"github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.Chart", "github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.SDSClusterRef", "github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.SDSPackageManagerRef"},
 		},
 		"github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.SDSApplicationStatus": {
 			Schema: spec.Schema{
