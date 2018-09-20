@@ -10,20 +10,6 @@ import (
 type SDSClusterOptions struct {
 	Name     string
 	Provider string
-	AWS      AWSOptions
-	MaaS     MaaSOptions
-}
-
-type AWSOptions struct {
-	SecretKeyId     string
-	SecretAccessKey string
-	Region          string
-}
-
-type MaaSOptions struct {
-	Endpoint string
-	Username string
-	OAuthKey string
 }
 
 func GenerateSDSCluster(options SDSClusterOptions) sdsapi.SDSCluster {
@@ -32,13 +18,7 @@ func GenerateSDSCluster(options SDSClusterOptions) sdsapi.SDSCluster {
 			Name: options.Name,
 		},
 		Spec: sdsapi.SDSClusterSpec{
-			Provider: sdsapi.ProviderSpec{
-				Name: options.Provider,
-				AWS:  sdsapi.AWSSpec{Region: options.AWS.Region, SecretAccessKey: options.AWS.SecretAccessKey, SecretKeyId: options.AWS.SecretKeyId},
-				MaaS: sdsapi.MaaSSpec{Endpoint: options.MaaS.Endpoint, Username: options.MaaS.Username, OAuthKey: options.MaaS.OAuthKey},
-			},
-			PackageManager: sdsapi.SDSPackageManagerSpec{},
-			Applications:   []sdsapi.SDSApplicationSpec{},
+			Provider: options.Provider,
 		},
 	}
 }

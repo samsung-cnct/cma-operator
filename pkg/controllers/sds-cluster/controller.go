@@ -2,6 +2,9 @@ package sds_cluster
 
 import (
 	"fmt"
+	"github.com/samsung-cnct/cma-operator/pkg/util/cmagrpc"
+	"github.com/spf13/viper"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"time"
 
 	"k8s.io/apimachinery/pkg/fields"
@@ -10,17 +13,20 @@ import (
 	"github.com/juju/loggo"
 	api "github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1"
 	"github.com/samsung-cnct/cma-operator/pkg/generated/cma/client/clientset/versioned"
-	"github.com/samsung-cnct/cma-operator/pkg/layouts"
-	"github.com/samsung-cnct/cma-operator/pkg/layouts/poc"
 	"github.com/samsung-cnct/cma-operator/pkg/util"
-	"github.com/samsung-cnct/cma-operator/pkg/util/ccutil"
-	"github.com/samsung-cnct/cma-operator/pkg/util/cma"
 	"github.com/samsung-cnct/cma-operator/pkg/util/k8sutil"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
+)
+
+const (
+	WaitForClusterChangeMaxTries         = 3
+	WaitForClusterChangeTimeInterval     = 5 * time.Second
+	KubernetesNamespaceViperVariableName = "kubernetes-namespace"
+	ClusterReferenceIDAnnotation         = "referenceID"
 )
 
 var (
@@ -32,10 +38,15 @@ type SDSClusterController struct {
 	queue    workqueue.RateLimitingInterface
 	informer cache.Controller
 
-	client *versioned.Clientset
+	client        *versioned.Clientset
+	cmaGRPCClient cmagrpc.ClientInterface
 }
 
-func NewSDSClusterController(config *rest.Config) *SDSClusterController {
+func NewSDSClusterController(config *rest.Config) (*SDSClusterController, error) {
+	cmaGRPCClient, err := cmagrpc.CreateNewDefaultClient()
+	if err != nil {
+		return nil, err
+	}
 	if config == nil {
 		config = k8sutil.DefaultConfig
 	}
@@ -45,7 +56,7 @@ func NewSDSClusterController(config *rest.Config) *SDSClusterController {
 	sdsClusterListWatcher := cache.NewListWatchFromClient(
 		client.CmaV1alpha1().RESTClient(),
 		api.SDSClusterResourcePlural,
-		"default",
+		viper.GetString(KubernetesNamespaceViperVariableName),
 		fields.Everything())
 
 	// create the workqueue
@@ -79,13 +90,14 @@ func NewSDSClusterController(config *rest.Config) *SDSClusterController {
 	}, cache.Indexers{})
 
 	output := &SDSClusterController{
-		informer: informer,
-		indexer:  indexer,
-		queue:    queue,
-		client:   client,
+		informer:      informer,
+		indexer:       indexer,
+		queue:         queue,
+		client:        client,
+		cmaGRPCClient: cmaGRPCClient,
 	}
 	output.SetLogger()
-	return output
+	return output, nil
 }
 
 func (c *SDSClusterController) processNextItem() bool {
@@ -100,14 +112,14 @@ func (c *SDSClusterController) processNextItem() bool {
 	defer c.queue.Done(key)
 
 	// Invoke the method containing the business logic
-	err := c.proxessItem(key.(string))
+	err := c.processItem(key.(string))
 	// Handle the error if something went wrong during the execution of the business logic
 	c.handleErr(err, key)
 	return true
 }
 
 // processItem is the business logic of the controller.
-func (c *SDSClusterController) proxessItem(key string) error {
+func (c *SDSClusterController) processItem(key string) error {
 	obj, exists, err := c.indexer.GetByKey(key)
 	if err != nil {
 		glog.Errorf("Fetching object with key %s from store failed with %v", key, err)
@@ -123,19 +135,8 @@ func (c *SDSClusterController) proxessItem(key string) error {
 		fmt.Printf("SDSCluster %s does exist (name=%s)!\n", key, clusterName)
 
 		switch sdsCluster.Status.Phase {
-		case api.ClusterPhaseNone, api.ClusterPhasePending:
-			c.deployKrakenCluster(sdsCluster)
-		case api.ClusterPhaseHaveCluster:
-			c.deployPackageManager(sdsCluster)
-		case api.ClusterPhaseHavePackageManager:
-			c.deployApplications(sdsCluster)
-		}
-		if sdsCluster.Status.ClusterBuilt != true {
-			c.deployKrakenCluster(sdsCluster)
-		} else if sdsCluster.Status.TillerInstalled != true {
-			c.deployPackageManager(sdsCluster)
-		} else if sdsCluster.Status.AppsInstalled != true {
-			c.deployApplications(sdsCluster)
+		case api.ClusterPhaseNone, api.ClusterPhasePending, api.ClusterPhaseWaitingForCluster, api.ClusterPhaseUpgrading:
+			go c.waitForClusterReady(sdsCluster)
 		}
 	}
 	return nil
@@ -199,97 +200,53 @@ func (c *SDSClusterController) SetLogger() {
 	logger = util.GetModuleLogger("pkg.controllers.sds_cluster", loggo.INFO)
 }
 
-func (c *SDSClusterController) deployKrakenCluster(sdsCluster *api.SDSCluster) {
-	clusterName := sdsCluster.GetName()
-	krakenCluster := ccutil.GenerateKrakenCluster(
-		ccutil.KrakenClusterOptions{
-			Name:     clusterName,
-			Provider: sdsCluster.Spec.Provider.Name,
-			MaaS: ccutil.MaaSOptions{
-				Endpoint: sdsCluster.Spec.Provider.MaaS.Endpoint,
-				Username: sdsCluster.Spec.Provider.MaaS.Username,
-				OAuthKey: sdsCluster.Spec.Provider.MaaS.OAuthKey,
-			},
-			AWS: ccutil.AWSOptions{
-				Region:          sdsCluster.Spec.Provider.AWS.Region,
-				SecretKeyId:     sdsCluster.Spec.Provider.AWS.SecretKeyId,
-				SecretAccessKey: sdsCluster.Spec.Provider.AWS.SecretAccessKey,
-			},
-		},
-	)
-	krakenCluster.Labels = make(map[string]string)
-	krakenCluster.Labels["SDSCluster"] = string(sdsCluster.ObjectMeta.UID)
-
-	_, err := ccutil.CreateKrakenCluster(krakenCluster, "default", nil)
-	if (err != nil) && (!k8sutil.IsResourceAlreadyExistsError(err)) {
-		logger.Infof("Could not create kraken cluster")
-		sdsCluster.Status.Phase = api.ClusterPhasePending
-		_, err = c.client.CmaV1alpha1().SDSClusters(sdsCluster.Namespace).Update(sdsCluster)
-		if err != nil {
-			logger.Infof("Could not update SDSCluster to Pending status, error was: %s", err)
-		}
-		return
-	}
-
-	sdsCluster.Status.Phase = api.ClusterPhaseWaitingForCluster
-	_, err = c.client.CmaV1alpha1().SDSClusters(sdsCluster.Namespace).Update(sdsCluster)
+func (c *SDSClusterController) waitForClusterReady(cluster *api.SDSCluster) {
+	cmagrpcClient, err := cmagrpc.CreateNewDefaultClient()
 	if err != nil {
-		logger.Infof("Failed to request a KrakenCluster CR, error was: %s", err)
+		logger.Errorf("could not create cma grpc client while waiting for cluster %s to come up", cluster.Name)
 	}
+	retryCount := 0
+	for retryCount < WaitForClusterChangeMaxTries {
+		clusterInfo, err := cmagrpcClient.GetCluster(cmagrpc.GetClusterInput{Name: cluster.Name, Provider: cluster.Spec.Provider})
+		if err == nil {
+			logger.Errorf("Cluster status is %s", clusterInfo.Status)
+			switch clusterInfo.Status {
+			case "Created", "Succeeded", "Upgraded", "Ready":
+				if c.handleClusterReady(cluster.Name) {
+					// We successfully handled it, apparently
+					return
+				}
+			}
+		} else {
+			logger.Errorf("Error is %s for cluster %s", err, cluster.Name)
+		}
+		time.Sleep(WaitForClusterChangeTimeInterval)
+		retryCount++
+	}
+	// We waited for the max number of retries, let's log it and bail
+	logger.Errorf("waited too long for cluster -->%s<-- to work right", cluster.Name)
 }
 
-func (c *SDSClusterController) deployPackageManager(sdsCluster *api.SDSCluster) {
-	// TODO Make this dynamic, but for now OK
-	var layout layouts.Layout
-	layout = poc.NewLayout()
+func (c *SDSClusterController) handleClusterReady(clusterName string) bool {
+	freshCopy, err := c.client.CmaV1alpha1().SDSClusters(viper.GetString(KubernetesNamespaceViperVariableName)).Get(clusterName, v1.GetOptions{})
+	if freshCopy.Annotations[ClusterReferenceIDAnnotation] != "" {
+		// We need to notify someone that the cluster is now ready (again)
 
-	clusterName := sdsCluster.GetName()
-	// Cluster name shouldn't have to be the name of the package manager - need to fix
-	options := cma.SDSPackageManagerOptions{
-		Name:            clusterName,
-		Namespace:       sdsCluster.Spec.PackageManager.Namespace,
-		Version:         sdsCluster.Spec.PackageManager.Version,
-		ClusterWide:     sdsCluster.Spec.PackageManager.Permissions.ClusterWide,
-		AdminNamespaces: sdsCluster.Spec.PackageManager.Permissions.Namespaces,
+		// Do Stuff here
+		logger.Errorf("I was supposed to do something about cluster -->%s<--!", clusterName)
+
+		freshCopy.Annotations[ClusterReferenceIDAnnotation] = ""
+	} else {
+		logger.Errorf("No annotation on cluster -->%s<--", clusterName)
 	}
-	_, err := cma.CreateSDSPackageManager(layout.GenerateSDSPackageManager(options, sdsCluster), sdsCluster.Namespace, nil)
-	if (err != nil) && (!k8sutil.IsResourceAlreadyExistsError(err)) {
-		logger.Infof("Could not create SDSPackageManager for cluster %s", clusterName)
-		sdsCluster.Status.Phase = api.ClusterPhaseHaveCluster
-		_, err = c.client.CmaV1alpha1().SDSClusters(sdsCluster.Namespace).Update(sdsCluster)
-		if err != nil {
-			logger.Infof("Could not update SDSCluster to HaveCluster status, error was: %s", err)
+	if err == nil {
+		freshCopy.Status.Phase = api.ClusterPhaseReady
+		_, err = c.client.CmaV1alpha1().SDSClusters(viper.GetString(KubernetesNamespaceViperVariableName)).Update(freshCopy)
+		if err == nil {
+			return true
 		}
-		return
+		logger.Errorf("I was supposed to do something about cluster -->%s<--!", err)
 	}
-
-	sdsCluster.Status.Phase = api.ClusterPhaseDeployingPackageManager
-	_, err = c.client.CmaV1alpha1().SDSClusters(sdsCluster.Namespace).Update(sdsCluster)
-	if err != nil {
-		logger.Infof("Failed to request a SDSPackageManager CR, error was: %s", err)
-	}
-}
-
-func (c *SDSClusterController) deployApplications(sdsCluster *api.SDSCluster) {
-	// TODO Make this dynamic, but for now OK
-	var layout layouts.Layout
-	layout = poc.NewLayout()
-
-	packageManager, _ := cma.GetSDSPackageManager(sdsCluster.Name, "default", nil)
-
-	clusterName := sdsCluster.GetName()
-	for _, application := range layout.GenerateSDSApplications(sdsCluster, packageManager) {
-		_, err := cma.CreateSDSApplication(application, "default", nil)
-		if err != nil {
-			logger.Infof("Error creating SDSApplication -->%s<-- for cluster -->%s<--, error was -->%s<--", application.Name, sdsCluster.Name, err)
-			continue
-		}
-		logger.Infof("Created SDSApplication -->%s<-- for SDSCluster -->%s<--", application.Name, sdsCluster.Name)
-	}
-
-	sdsCluster.Status.Phase = api.ClusterPhaseDeployingApplications
-	_, err := c.client.CmaV1alpha1().SDSClusters(sdsCluster.Namespace).Update(sdsCluster)
-	if err != nil {
-		logger.Infof("Failed to request a SDSPackageManager CR for cluster %s, error was: %s", clusterName, err)
-	}
+	// Something happened, so let's sleep and try again
+	return false
 }

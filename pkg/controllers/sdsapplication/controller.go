@@ -1,6 +1,7 @@
 package sdsapplication
 
 import (
+	"github.com/samsung-cnct/cma-operator/pkg/util/cmagrpc"
 	"k8s.io/apimachinery/pkg/fields"
 
 	api "github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1"
@@ -17,10 +18,15 @@ type SDSApplicationController struct {
 	queue    workqueue.RateLimitingInterface
 	informer cache.Controller
 
-	client *versioned.Clientset
+	client        *versioned.Clientset
+	cmaGRPCClient cmagrpc.ClientInterface
 }
 
-func NewSDSApplicationController(config *rest.Config) (output *SDSApplicationController) {
+func NewSDSApplicationController(config *rest.Config) (output *SDSApplicationController, err error) {
+	cmaGRPCClient, err := cmagrpc.CreateNewDefaultClient()
+	if err != nil {
+		return nil, err
+	}
 	if config == nil {
 		config = k8sutil.DefaultConfig
 	}
@@ -105,8 +111,9 @@ func NewSDSApplicationController(config *rest.Config) (output *SDSApplicationCon
 		indexer:  sharedInformer.GetIndexer(),
 		//informer: informer,
 		//indexer:  indexer,
-		queue:  queue,
-		client: client,
+		queue:         queue,
+		client:        client,
+		cmaGRPCClient: cmaGRPCClient,
 	}
 	output.SetLogger()
 	return

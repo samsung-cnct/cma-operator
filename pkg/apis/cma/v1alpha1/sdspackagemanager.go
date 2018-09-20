@@ -52,6 +52,8 @@ type SDSPackageManagerSpec struct {
 	Name string `json:"name"`
 	// What version should this package manager be?
 	Version string `json:"version"`
+	// What tiller image should this package manager user?
+	Image string `json:"image"`
 	// ServiceAccount to use
 	ServiceAccount ServiceAccount `json:"serviceAccount"`
 	// Permissions of the Package Manager
