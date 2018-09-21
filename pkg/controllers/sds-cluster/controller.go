@@ -3,6 +3,7 @@ package sds_cluster
 import (
 	"fmt"
 	"github.com/samsung-cnct/cma-operator/pkg/util/cmagrpc"
+	"github.com/samsung-cnct/cma-operator/pkg/util/sds/callback"
 	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"time"
@@ -26,7 +27,8 @@ const (
 	WaitForClusterChangeMaxTries         = 3
 	WaitForClusterChangeTimeInterval     = 5 * time.Second
 	KubernetesNamespaceViperVariableName = "kubernetes-namespace"
-	ClusterReferenceIDAnnotation         = "referenceID"
+	ClusterRequestIDAnnotation           = "requestID"
+	ClusterCallbackURLAnnotation         = "callbackURL"
 )
 
 var (
@@ -212,7 +214,7 @@ func (c *SDSClusterController) waitForClusterReady(cluster *api.SDSCluster) {
 			logger.Errorf("Cluster status is %s", clusterInfo.Status)
 			switch clusterInfo.Status {
 			case "Created", "Succeeded", "Upgraded", "Ready":
-				if c.handleClusterReady(cluster.Name) {
+				if c.handleClusterReady(cluster.Name, clusterInfo) {
 					// We successfully handled it, apparently
 					return
 				}
@@ -227,15 +229,25 @@ func (c *SDSClusterController) waitForClusterReady(cluster *api.SDSCluster) {
 	logger.Errorf("waited too long for cluster -->%s<-- to work right", cluster.Name)
 }
 
-func (c *SDSClusterController) handleClusterReady(clusterName string) bool {
+func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInfo cmagrpc.GetClusterOutput) bool {
 	freshCopy, err := c.client.CmaV1alpha1().SDSClusters(viper.GetString(KubernetesNamespaceViperVariableName)).Get(clusterName, v1.GetOptions{})
-	if freshCopy.Annotations[ClusterReferenceIDAnnotation] != "" {
+	if freshCopy.Annotations[ClusterRequestIDAnnotation] != "" {
 		// We need to notify someone that the cluster is now ready (again)
 
 		// Do Stuff here
+		message := &sdscallback.ClusterMessage{
+			State: sdscallback.ClusterMessageStateCompleted,
+			Data: sdscallback.ClusterDataPayload{
+				Kubeconfig:       clusterInfo.Kubeconfig,
+				ClusterStatus:    clusterInfo.Status,
+				CreationDateTime: string(freshCopy.ObjectMeta.CreationTimestamp.Unix()),
+			},
+		}
+		sdscallback.DoCallback(freshCopy.Annotations[ClusterCallbackURLAnnotation], message)
+
 		logger.Errorf("I was supposed to do something about cluster -->%s<--!", clusterName)
 
-		freshCopy.Annotations[ClusterReferenceIDAnnotation] = ""
+		freshCopy.Annotations[ClusterRequestIDAnnotation] = ""
 	} else {
 		logger.Errorf("No annotation on cluster -->%s<--", clusterName)
 	}
