@@ -2,6 +2,7 @@ package sdsapplication
 
 import (
 	"github.com/samsung-cnct/cma-operator/pkg/util/cmagrpc"
+	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/fields"
 
 	api "github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1"
@@ -11,6 +12,14 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 	"time"
+)
+
+const (
+	WaitForClusterChangeMaxTries         = 3
+	WaitForClusterChangeTimeInterval     = 5 * time.Second
+	KubernetesNamespaceViperVariableName = "kubernetes-namespace"
+	ClusterRequestIDAnnotation           = "requestID"
+	ClusterCallbackURLAnnotation         = "callbackURL"
 )
 
 type SDSApplicationController struct {
@@ -36,7 +45,7 @@ func NewSDSApplicationController(config *rest.Config) (output *SDSApplicationCon
 	sdsApplicationListWatcher := cache.NewListWatchFromClient(
 		client.CmaV1alpha1().RESTClient(),
 		api.SDSApplicationResourcePlural,
-		"default",
+		viper.GetString(KubernetesNamespaceViperVariableName),
 		fields.Everything())
 
 	// create the workqueue

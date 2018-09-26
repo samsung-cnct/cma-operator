@@ -235,6 +235,14 @@
   revision = "584905176618da46b895b176c721b02c476b6993"
 
 [[projects]]
+  branch = "master"
+  digest = "1:f44d34fda864bed6d6c71514cd40b2ee097e6e67f745d5d014113e1faa5af8b7"
+  name = "github.com/konsorten/go-windows-terminal-sequences"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "b729f2633dfe35f4d1d8a32385f6685610ce1cb5"
+
+[[projects]]
   digest = "1:c568d7727aa262c32bdf8a3f7db83614f7af0ed661474b24588de635c20024c7"
   name = "github.com/magiconair/properties"
   packages = ["."]
@@ -304,11 +312,19 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:001bf34d5231af69cf10e3942d6620fd99ab1d48c457d56e5691d7f8443fc75e"
+  digest = "1:11bd501b34a335bece4e1af428bb40cdf7d552845628fb66e327df995e1d2d57"
   name = "github.com/samsung-cnct/cluster-manager-api"
   packages = ["pkg/generated/api"]
   pruneopts = "UT"
-  revision = "e0e063df01beada3dad59b5f913a708617c6b718"
+  revision = "0b89daf3314098ae4b208c34a6a7d689e5a3854a"
+
+[[projects]]
+  digest = "1:dc2d85c13ac22c22a1f3170a41a8e1b897fa05134aaf533f16df44f66a25b4a1"
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "a67f783a3814b8729bd2dac5780b5f78f8dbd64d"
+  version = "v1.1.0"
 
 [[projects]]
   digest = "1:6a4a11ba764a56d2758899ec6f3848d24698d48442ebce85ee7a3f63284526cd"
@@ -371,7 +387,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:1c14517b2f106c61d75006199b46a46576058661d469658cb0f90739919641d2"
+  digest = "1:1ae047ded1ddcbe0eca8b0772e3ff2c10e354db4c42c65b96d0386883e63904d"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -384,7 +400,7 @@
     "trace",
   ]
   pruneopts = "UT"
-  revision = "26e67e76b6c3f6ce91f7c52def5af501b4e0f3a2"
+  revision = "4dfa2610cdf3b287375bbba5b8f2a14d3b01d8de"
 
 [[projects]]
   branch = "master"
@@ -399,14 +415,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:49edbccdd6fb213dcf45486b0c939b788740451e5f2ff77aa42ca742d10da449"
+  digest = "1:6fb1dd382722f93fcf7c52ff631f7b899d8c5d54314d88d42dd1f4e5ac404a30"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "1561086e645b2809fb9f8a1e2a38160bf8d53bf4"
+  revision = "c2ed4eda69e7f62900806e4cd6e45f0429f859fa"
 
 [[projects]]
   digest = "1:0c56024909189aee3364b7f21a95a27459f718aa7c199a5c111c36cfffd9eaef"
@@ -465,7 +481,7 @@
     "googleapis/rpc/status",
   ]
   pruneopts = "UT"
-  revision = "c3f76f3b92d1ffa4c58a9ff842a58b8877655e0f"
+  revision = "0e822944c569bf5c9afd034adaa56208bd2906ac"
 
 [[projects]]
   digest = "1:ab8e92d746fb5c4c18846b0879842ac8e53b3d352449423d0924a11f1020ae1b"
@@ -520,7 +536,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:9a5742021de9e9efc565db89f34f6fb114eea6ed1d5c1fcc549291943461c9b0"
+  digest = "1:12e2758c218cd9512139f46b4c8279ea9b901d5e89180eb35362704dc87fee09"
   name = "k8s.io/api"
   packages = [
     "admissionregistration/v1alpha1",
@@ -554,7 +570,7 @@
     "storage/v1beta1",
   ]
   pruneopts = "UT"
-  revision = "f456898a08e4bbc5891694118f3819f324de12ff"
+  revision = "a191abe0b71e00ce4cde58af8002aa4c1a8bb068"
 
 [[projects]]
   digest = "1:758efcf9cc97ed132a9f9f9e2b638a0cd401a2b1b9a98e91d037de46a84d2f5e"
@@ -708,6 +724,7 @@
     "github.com/golang/glog",
     "github.com/juju/loggo",
     "github.com/samsung-cnct/cluster-manager-api/pkg/generated/api",
+    "github.com/sirupsen/logrus",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
     "google.golang.org/grpc",
