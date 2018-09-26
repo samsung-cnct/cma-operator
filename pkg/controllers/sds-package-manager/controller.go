@@ -3,6 +3,7 @@ package sds_package_manager
 import (
 	"fmt"
 	"github.com/samsung-cnct/cma-operator/pkg/util/cmagrpc"
+	"github.com/spf13/viper"
 	"time"
 
 	"k8s.io/apimachinery/pkg/fields"
@@ -31,6 +32,14 @@ var (
 	logger loggo.Logger
 )
 
+const (
+	WaitForClusterChangeMaxTries         = 3
+	WaitForClusterChangeTimeInterval     = 5 * time.Second
+	KubernetesNamespaceViperVariableName = "kubernetes-namespace"
+	ClusterRequestIDAnnotation           = "requestID"
+	ClusterCallbackURLAnnotation         = "callbackURL"
+)
+
 type SDSPackageManagerController struct {
 	indexer  cache.Indexer
 	queue    workqueue.RateLimitingInterface
@@ -54,7 +63,7 @@ func NewSDSPackageManagerController(config *rest.Config) (output *SDSPackageMana
 	sdsPackageManagerListWatcher := cache.NewListWatchFromClient(
 		client.CmaV1alpha1().RESTClient(),
 		api.SDSPackageManagerResourcePlural,
-		"default",
+		viper.GetString(KubernetesNamespaceViperVariableName),
 		fields.Everything())
 
 	// create the workqueue
@@ -154,7 +163,7 @@ func (c *SDSPackageManagerController) handleErr(err error, key interface{}) {
 
 	// This controller retries 5 times if something goes wrong. After that, it stops trying.
 	if c.queue.NumRequeues(key) < 5 {
-		glog.Infof("Error syncing krakenCluster %v: %v", key, err)
+		glog.Infof("Error syncing packageManager %v: %v", key, err)
 
 		// Re-enqueue the key rate limited. Based on the rate limiter on the
 		// queue and the re-enqueue history, the key will be processed later again.
@@ -165,7 +174,7 @@ func (c *SDSPackageManagerController) handleErr(err error, key interface{}) {
 	c.queue.Forget(key)
 	// Report to an external entity that, even after several retries, we could not successfully process this key
 	runtime.HandleError(err)
-	glog.Infof("Dropping krakenCluster %q out of the queue: %v", key, err)
+	glog.Infof("Dropping packageManager %q out of the queue: %v", key, err)
 }
 
 func (c *SDSPackageManagerController) Run(threadiness int, stopCh chan struct{}) {
@@ -197,7 +206,7 @@ func (c *SDSPackageManagerController) runWorker() {
 }
 
 func (c *SDSPackageManagerController) deployTiller(packageManager *api.SDSPackageManager) (bool, error) {
-	config, err := c.getRestConfigForRemoteCluster(packageManager.Spec.Name, packageManager.Namespace, nil)
+	config, err := c.getRestConfigForRemoteCluster(packageManager.Spec.Cluster.Name, packageManager.Namespace, nil)
 	if err != nil {
 		return false, err
 	}
@@ -255,9 +264,14 @@ func retrieveClusterRestConfig(name string, kubeconfig string) (*rest.Config, er
 }
 
 func (c *SDSPackageManagerController) getRestConfigForRemoteCluster(clusterName string, namespace string, config *rest.Config) (*rest.Config, error) {
-	cluster, err := c.cmaGRPCClient.GetCluster(cmagrpc.GetClusterInput{Name: clusterName})
+	sdscluster, err := c.client.CmaV1alpha1().SDSClusters(viper.GetString(KubernetesNamespaceViperVariableName)).Get(clusterName, v1.GetOptions{})
 	if err != nil {
-		glog.Errorf("Failed to retrieve KrakenCluster CR -->%s<-- in namespace -->%s<--, error was: %s", clusterName, namespace, err)
+		glog.Errorf("Failed to retrieve SDSCluster -->%s<--, error was: %s", clusterName, err)
+		return nil, err
+	}
+	cluster, err := c.cmaGRPCClient.GetCluster(cmagrpc.GetClusterInput{Name: clusterName, Provider: sdscluster.Spec.Provider})
+	if err != nil {
+		glog.Errorf("Failed to retrieve Cluster Status -->%s<--, error was: %s", clusterName, err)
 		return nil, err
 	}
 	if cluster.Kubeconfig == "" {
@@ -279,7 +293,7 @@ func (c *SDSPackageManagerController) SetLogger() {
 }
 
 func (c *SDSPackageManagerController) waitForTiller(packageManager *api.SDSPackageManager) (result bool, err error) {
-	config, err := c.getRestConfigForRemoteCluster(packageManager.Spec.Name, packageManager.Namespace, nil)
+	config, err := c.getRestConfigForRemoteCluster(packageManager.Spec.Cluster.Name, packageManager.Namespace, nil)
 	if err != nil {
 		return false, err
 	}

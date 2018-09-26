@@ -1,8 +1,5 @@
 package sdscallback
 
-type Client struct {
-}
-
-type ClientInterface interface {
-	DoCallback()
+type CallbackMessage interface {
+	ToJSON() ([]byte, error)
 }

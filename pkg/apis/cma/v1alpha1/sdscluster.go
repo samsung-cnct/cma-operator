@@ -8,7 +8,7 @@ const (
 	ClusterPhaseNone              = ""
 	ClusterPhasePending           = "Pending"
 	ClusterPhaseWaitingForCluster = "Waiting for cluster"
-	ClusterPhaseUpgrading         = "Deploying Applications"
+	ClusterPhaseUpgrading         = "Upgrading Cluster"
 	ClusterPhaseDeleting          = "Deleting cluster"
 	ClusterPhaseReady             = "Ready"
 	ClusterPhaseFailed            = "Failed"

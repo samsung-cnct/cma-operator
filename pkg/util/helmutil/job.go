@@ -2,12 +2,16 @@ package helmutil
 
 import (
 	"encoding/base64"
-
 	sdsapi "github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1"
 	"github.com/samsung-cnct/cma-operator/pkg/util/cma"
 	"github.com/samsung-cnct/cma-operator/pkg/util/k8sutil"
+	"github.com/spf13/viper"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+)
+
+const (
+	KubernetesNamespaceViperVariableName = "kubernetes-namespace"
 )
 
 type TillerInitOptions struct {
@@ -49,7 +53,7 @@ func GenerateTillerInitJob(options TillerInitOptions) batchv1.Job {
 }
 
 func GenerateHelmInstallJob(application sdsapi.SDSApplicationSpec) batchv1.Job {
-	packageManager, _ := cma.GetSDSPackageManager(application.PackageManager.Name, "default", nil)
+	packageManager, _ := cma.GetSDSPackageManager(application.PackageManager.Name+"-"+application.Cluster.Name, viper.GetString(KubernetesNamespaceViperVariableName), nil)
 	jobName := "app-install-" + application.Name
 	backoffLimit := int32(500)
 	commandString := ""

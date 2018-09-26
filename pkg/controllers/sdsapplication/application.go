@@ -2,6 +2,7 @@ package sdsapplication
 
 import (
 	"github.com/samsung-cnct/cma-operator/pkg/util/cma"
+	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"time"
 
@@ -12,11 +13,11 @@ import (
 )
 
 func (c *SDSApplicationController) deployApplication(application *api.SDSApplication) (bool, error) {
-	config, err := c.getRestConfigForRemoteCluster(application.Spec.PackageManager.Name, application.Namespace, nil)
+	config, err := c.getRestConfigForRemoteCluster(application.Spec.Cluster.Name, application.Namespace, nil)
 	if err != nil {
 		return false, err
 	}
-	packageManager, err := cma.GetSDSPackageManager(application.Spec.PackageManager.Name, "default", nil)
+	packageManager, err := cma.GetSDSPackageManager(application.Spec.PackageManager.Name+"-"+application.Spec.Cluster.Name, viper.GetString(KubernetesNamespaceViperVariableName), nil)
 
 	k8sutil.CreateJob(helmutil.GenerateHelmInstallJob(application.Spec), packageManager.Spec.Namespace, config)
 
@@ -32,12 +33,12 @@ func (c *SDSApplicationController) deployApplication(application *api.SDSApplica
 }
 
 func (c *SDSApplicationController) waitForApplication(application *api.SDSApplication) (result bool, err error) {
-	config, err := c.getRestConfigForRemoteCluster(application.Spec.PackageManager.Name, application.Namespace, nil)
+	config, err := c.getRestConfigForRemoteCluster(application.Spec.Cluster.Name, application.Namespace, nil)
 	if err != nil {
 		return false, err
 	}
 
-	packageManager, err := cma.GetSDSPackageManager(application.Spec.PackageManager.Name, "default", nil)
+	packageManager, err := cma.GetSDSPackageManager(application.Spec.PackageManager.Name+"-"+application.Spec.Cluster.Name, viper.GetString(KubernetesNamespaceViperVariableName), nil)
 	if err != nil {
 		logger.Infof("Cannot retrieve package manager for application %s", application.Spec.Name)
 		return false, err
@@ -68,24 +69,5 @@ func (c *SDSApplicationController) waitForApplication(application *api.SDSApplic
 }
 
 func (c *SDSApplicationController) updateSDSCluster(clusterName string) (result bool, err error) {
-	// TODO This is dubious, but for the PoC, good enough
-	sdsCluster, err := cma.GetSDSCluster(clusterName, "default", nil)
-	if err != nil {
-		logger.Infof("Failed to get SDSCluster for SDSApplication %s, error was: ", clusterName, err)
-		return false, err
-	}
-
-	changes := false
-	if sdsCluster.Status.AppsInstalled == false {
-		changes = true
-		sdsCluster.Status.AppsInstalled = true
-	}
-	if changes {
-		_, err = cma.UpdateSDSCluster(sdsCluster, sdsCluster.Namespace, nil)
-		if err != nil {
-			logger.Infof("Could not update SDSCluster for KrakenCluster %s, error was: ", sdsCluster.Name, err)
-		}
-	}
-
 	return true, nil
 }
