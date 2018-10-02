@@ -11,13 +11,13 @@ const (
 )
 
 type ClusterMessage struct {
-	ErrorCode    string             `json:"errorCode"`
-	ErrorDetail  string             `json:"errorDetail"`
-	ErrorText    string             `json:"errorText"`
-	ProgressRate int                `json:"progressRate"`
-	State        string             `json:"state"`
-	StateText    string             `json:"stateText"`
-	Data         ClusterDataPayload `json:"data"`
+	ErrorCode    string `json:"errorCode"`
+	ErrorDetail  string `json:"errorDetail"`
+	ErrorText    string `json:"errorText"`
+	ProgressRate int    `json:"progressRate"`
+	State        string `json:"state"`
+	StateText    string `json:"stateText"`
+	Data         string `json:"data"`
 }
 
 type ClusterDataPayload struct {
