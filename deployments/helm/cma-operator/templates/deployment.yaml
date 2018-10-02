@@ -22,3 +22,12 @@ spec:
       - name: {{ template "name" . }}
         image: "{{.Values.image.repo}}"
         imagePullPolicy: "Always"
+        env:
+        {{- if .Values.cma.enabled }}
+        - name: CMAOPERATOR_CMA_ENDPOINT
+          value: "{{.Values.cma.endpoint }}"
+        - name: CMAOPERATOR_CMA_INSECURE
+          value: "{{.Values.cma.insecure }}"
+        {{- end }}
+        - name: CMAOPERATOR_KUBERNETES_NAMESPACE
+          value: "{{ .Release.Namespace}}"

@@ -57,7 +57,11 @@ func SubmitMessage(URL string, https bool, message []byte) {
 			logrus.Infof("successfully submitted message to %s", URL)
 			return
 		}
-		logrus.Infof("unsuccessfully submitted message to %s, error was %s", URL, response.Status)
+		if response == nil {
+			logrus.Infof("unsuccessfully submitted message to %s", URL)
+		} else {
+			logrus.Infof("unsuccessfully submitted message to %s, error was %s", URL, response.Status)
+		}
 		retries++
 		time.Sleep(CallbackRetryTimeout)
 	}

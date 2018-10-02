@@ -1,6 +1,7 @@
 package sds_cluster
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/samsung-cnct/cma-operator/pkg/util/cmagrpc"
 	"github.com/samsung-cnct/cma-operator/pkg/util/sds/callback"
@@ -24,8 +25,8 @@ import (
 )
 
 const (
-	WaitForClusterChangeMaxTries         = 3
-	WaitForClusterChangeTimeInterval     = 5 * time.Second
+	WaitForClusterChangeMaxTries         = 100
+	WaitForClusterChangeTimeInterval     = 30 * time.Second
 	KubernetesNamespaceViperVariableName = "kubernetes-namespace"
 	ClusterRequestIDAnnotation           = "requestID"
 	ClusterCallbackURLAnnotation         = "callbackURL"
@@ -234,14 +235,18 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 	if freshCopy.Annotations[ClusterRequestIDAnnotation] != "" {
 		// We need to notify someone that the cluster is now ready (again)
 
+		dataPayload, _ := json.Marshal(sdscallback.ClusterDataPayload{
+			Kubeconfig:       clusterInfo.Kubeconfig,
+			ClusterStatus:    clusterInfo.Status,
+			CreationDateTime: string(freshCopy.ObjectMeta.CreationTimestamp.Unix()),
+		})
+
 		// Do Stuff here
 		message := &sdscallback.ClusterMessage{
-			State: sdscallback.ClusterMessageStateCompleted,
-			Data: sdscallback.ClusterDataPayload{
-				Kubeconfig:       clusterInfo.Kubeconfig,
-				ClusterStatus:    clusterInfo.Status,
-				CreationDateTime: string(freshCopy.ObjectMeta.CreationTimestamp.Unix()),
-			},
+			State:        sdscallback.ClusterMessageStateCompleted,
+			StateText:    clusterInfo.Status,
+			ProgressRate: 100,
+			Data:         string(dataPayload),
 		}
 		sdscallback.DoCallback(freshCopy.Annotations[ClusterCallbackURLAnnotation], message)
 
