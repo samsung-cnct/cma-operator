@@ -2,7 +2,9 @@ package sds_package_manager
 
 import (
 	"fmt"
+	"github.com/samsung-cnct/cma-operator/pkg/util/cma"
 	"github.com/samsung-cnct/cma-operator/pkg/util/cmagrpc"
+	"github.com/samsung-cnct/cma-operator/pkg/util/sds/callback"
 	"github.com/spf13/viper"
 	"time"
 
@@ -73,7 +75,7 @@ func NewSDSPackageManagerController(config *rest.Config) (output *SDSPackageMana
 	// whenever the cache is updated, the SDSCluster key is added to the workqueue.
 	// Note that when we finally process the item from the workqueue, we might see a newer version
 	// of the SDSPackageManager than the version which was responsible for triggering the update.
-	indexer, informer := cache.NewIndexerInformer(sdsPackageManagerListWatcher, &api.SDSPackageManager{}, 0, cache.ResourceEventHandlerFuncs{
+	indexer, informer := cache.NewIndexerInformer(sdsPackageManagerListWatcher, &api.SDSPackageManager{}, 30*time.Second, cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			key, err := cache.MetaNamespaceKeyFunc(obj)
 			if err == nil {
@@ -144,8 +146,10 @@ func (c *SDSPackageManagerController) processItem(key string) error {
 		switch SDSPackageManager.Status.Phase {
 		case api.PackageManagerPhaseNone, api.PackageManagerPhasePending:
 			c.deployTiller(SDSPackageManager)
+			break
 		case api.PackageManagerPhaseInstalling:
 			c.waitForTiller(SDSPackageManager)
+			break
 		}
 	}
 	return nil
@@ -206,6 +210,16 @@ func (c *SDSPackageManagerController) runWorker() {
 }
 
 func (c *SDSPackageManagerController) deployTiller(packageManager *api.SDSPackageManager) (bool, error) {
+	sdsCluster, err := cma.GetSDSCluster(packageManager.Spec.Cluster.Name, viper.GetString(KubernetesNamespaceViperVariableName), nil)
+	if err != nil {
+		logger.Infof("Error trying to package manager -->%s<-- could not get sdscluster becuase of %s", packageManager.Spec.Cluster.Name, err)
+		return false, err
+	}
+	if sdsCluster.Status.Phase != api.ClusterPhaseReady {
+		logger.Infof("Could not deploy package manager -->%s<-- as cluster is not ready, in phase -->%s<--", sdsCluster.Name, sdsCluster.Status.Phase)
+		return false, err
+	}
+
 	config, err := c.getRestConfigForRemoteCluster(packageManager.Spec.Cluster.Name, packageManager.Namespace, nil)
 	if err != nil {
 		return false, err
@@ -233,6 +247,16 @@ func (c *SDSPackageManagerController) deployTiller(packageManager *api.SDSPackag
 			Namespace:      packageManager.Spec.Namespace,
 			ServiceAccount: "tiller-sa",
 			Version:        packageManager.Spec.Version}), packageManager.Spec.Namespace, config)
+
+	if packageManager.Annotations[ClusterCallbackURLAnnotation] != "" {
+		// We need to notify someone that the package manager is being deployed(again)
+		message := &sdscallback.ClusterMessage{
+			State:        sdscallback.ClusterMessageStateInProgress,
+			StateText:    api.PackageManagerPhaseInstalling,
+			ProgressRate: 0,
+		}
+		sdscallback.DoCallback(packageManager.Annotations[ClusterCallbackURLAnnotation], message)
+	}
 
 	packageManager.Status.Phase = api.PackageManagerPhaseInstalling
 	_, err = c.client.CmaV1alpha1().SDSPackageManagers(packageManager.Namespace).Update(packageManager)
@@ -323,5 +347,14 @@ func (c *SDSPackageManagerController) waitForTiller(packageManager *api.SDSPacka
 }
 
 func (c *SDSPackageManagerController) handleHavingPackageManager(packageManager *api.SDSPackageManager) {
+	if packageManager.Annotations[ClusterCallbackURLAnnotation] != "" {
+		// We need to notify someone that the package manager is being deployed(again)
+		message := &sdscallback.ClusterMessage{
+			State:        sdscallback.ClusterMessageStateCompleted,
+			StateText:    api.PackageManagerPhaseImplemented,
+			ProgressRate: 100,
+		}
+		sdscallback.DoCallback(packageManager.Annotations[ClusterCallbackURLAnnotation], message)
+	}
 
 }
