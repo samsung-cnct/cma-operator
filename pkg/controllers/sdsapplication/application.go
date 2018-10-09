@@ -2,6 +2,7 @@ package sdsapplication
 
 import (
 	"github.com/samsung-cnct/cma-operator/pkg/util/cma"
+	"github.com/samsung-cnct/cma-operator/pkg/util/sds/callback"
 	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"time"
@@ -13,13 +14,31 @@ import (
 )
 
 func (c *SDSApplicationController) deployApplication(application *api.SDSApplication) (bool, error) {
+	packageManager, err := cma.GetSDSPackageManager(application.Spec.PackageManager.Name+"-"+application.Spec.Cluster.Name, viper.GetString(KubernetesNamespaceViperVariableName), nil)
+	if err != nil {
+		logger.Infof("Error trying to install -->%s<-- could not get package manger becuase of %s", application.Spec.Name, err)
+		return false, err
+	}
+	if packageManager.Status.Phase != api.PackageManagerPhaseImplemented {
+		logger.Infof("Could not deploy app -->%s<-- as package manager is not ready, in phase -->%s<--", application.Spec.Name, packageManager.Status.Phase)
+		return false, err
+	}
 	config, err := c.getRestConfigForRemoteCluster(application.Spec.Cluster.Name, application.Namespace, nil)
 	if err != nil {
 		return false, err
 	}
-	packageManager, err := cma.GetSDSPackageManager(application.Spec.PackageManager.Name+"-"+application.Spec.Cluster.Name, viper.GetString(KubernetesNamespaceViperVariableName), nil)
 
 	k8sutil.CreateJob(helmutil.GenerateHelmInstallJob(application.Spec), packageManager.Spec.Namespace, config)
+
+	if application.Annotations[ClusterCallbackURLAnnotation] != "" {
+		// We need to notify someone that the package manager is being deployed(again)
+		message := &sdscallback.ClusterMessage{
+			State:        sdscallback.ClusterMessageStateInProgress,
+			StateText:    api.ApplicationPhaseInstalling,
+			ProgressRate: 0,
+		}
+		sdscallback.DoCallback(application.Annotations[ClusterCallbackURLAnnotation], message)
+	}
 
 	application.Status.Phase = api.ApplicationPhaseInstalling
 	_, err = c.client.CmaV1alpha1().SDSApplications(application.Namespace).Update(application)
@@ -55,7 +74,7 @@ func (c *SDSApplicationController) waitForApplication(application *api.SDSApplic
 				_, err = c.client.CmaV1alpha1().SDSApplications(application.Namespace).Update(application)
 				if err == nil {
 					logger.Infof("Helm installed app -->%s<--", application.Spec.Name)
-					c.updateSDSCluster(application.Spec.PackageManager.Name)
+					c.handleInstalledApp(application)
 				} else {
 					logger.Infof("Could not update the status error was %s", err)
 				}
@@ -68,6 +87,15 @@ func (c *SDSApplicationController) waitForApplication(application *api.SDSApplic
 	return false, nil
 }
 
-func (c *SDSApplicationController) updateSDSCluster(clusterName string) (result bool, err error) {
+func (c *SDSApplicationController) handleInstalledApp(application *api.SDSApplication) (result bool, err error) {
+	if application.Annotations[ClusterCallbackURLAnnotation] != "" {
+		// We need to notify someone that the package manager is being deployed(again)
+		message := &sdscallback.ClusterMessage{
+			State:        sdscallback.ClusterMessageStateCompleted,
+			StateText:    api.ApplicationPhaseImplemented,
+			ProgressRate: 100,
+		}
+		sdscallback.DoCallback(application.Annotations[ClusterCallbackURLAnnotation], message)
+	}
 	return true, nil
 }

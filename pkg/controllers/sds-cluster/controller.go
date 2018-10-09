@@ -13,6 +13,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/juju/loggo"
+	pb "github.com/samsung-cnct/cluster-manager-api/pkg/generated/api"
 	api "github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1"
 	"github.com/samsung-cnct/cma-operator/pkg/generated/cma/client/clientset/versioned"
 	"github.com/samsung-cnct/cma-operator/pkg/util"
@@ -132,14 +133,25 @@ func (c *SDSClusterController) processItem(key string) error {
 	if !exists {
 		// Below we will warm up our cache with a SDSCluster, so that we will see a delete for one SDSCluster
 		fmt.Printf("SDSCluster %s does not exist anymore\n", key)
+		c.queue.Forget(key)
 	} else {
 		sdsCluster := obj.(*api.SDSCluster)
 		clusterName := sdsCluster.GetName()
-		fmt.Printf("SDSCluster %s does exist (name=%s)!\n", key, clusterName)
+		fmt.Printf("Examining Cluster -->%s<--", clusterName)
 
 		switch sdsCluster.Status.Phase {
-		case api.ClusterPhaseNone, api.ClusterPhasePending, api.ClusterPhaseWaitingForCluster, api.ClusterPhaseUpgrading:
+		case api.ClusterPhaseNone, api.ClusterPhasePending, api.ClusterPhaseWaitingForCluster:
 			go c.waitForClusterReady(sdsCluster)
+			break
+		case api.ClusterPhaseDeleting:
+			go c.handleDeletedCluster(sdsCluster)
+			break
+		case api.ClusterPhaseFailed:
+			go c.handleFailedCluster(sdsCluster)
+			break
+		case api.ClusterPhaseUpgrading:
+			go c.handleUpgradedCluster(sdsCluster)
+			break
 		}
 	}
 	return nil
@@ -208,13 +220,22 @@ func (c *SDSClusterController) waitForClusterReady(cluster *api.SDSCluster) {
 	if err != nil {
 		logger.Errorf("could not create cma grpc client while waiting for cluster %s to come up", cluster.Name)
 	}
+	if cluster.Annotations[ClusterCallbackURLAnnotation] != "" {
+		// We need to notify someone that the cluster is now in progress (again)
+		message := &sdscallback.ClusterMessage{
+			State:        sdscallback.ClusterMessageStateInProgress,
+			StateText:    pb.ClusterStatus_PROVISIONING.String(),
+			ProgressRate: 0,
+		}
+		sdscallback.DoCallback(cluster.Annotations[ClusterCallbackURLAnnotation], message)
+	}
 	retryCount := 0
 	for retryCount < WaitForClusterChangeMaxTries {
 		clusterInfo, err := cmagrpcClient.GetCluster(cmagrpc.GetClusterInput{Name: cluster.Name, Provider: cluster.Spec.Provider})
 		if err == nil {
 			logger.Errorf("Cluster status is %s", clusterInfo.Status)
 			switch clusterInfo.Status {
-			case "Created", "Succeeded", "Upgraded", "Ready":
+			case "Created", "Succeeded", "Upgraded", "Ready", pb.ClusterStatus_RUNNING.String():
 				if c.handleClusterReady(cluster.Name, clusterInfo) {
 					// We successfully handled it, apparently
 					return
@@ -232,7 +253,7 @@ func (c *SDSClusterController) waitForClusterReady(cluster *api.SDSCluster) {
 
 func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInfo cmagrpc.GetClusterOutput) bool {
 	freshCopy, err := c.client.CmaV1alpha1().SDSClusters(viper.GetString(KubernetesNamespaceViperVariableName)).Get(clusterName, v1.GetOptions{})
-	if freshCopy.Annotations[ClusterRequestIDAnnotation] != "" {
+	if freshCopy.Annotations[ClusterCallbackURLAnnotation] != "" {
 		// We need to notify someone that the cluster is now ready (again)
 
 		dataPayload, _ := json.Marshal(sdscallback.ClusterDataPayload{
@@ -251,8 +272,6 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 		sdscallback.DoCallback(freshCopy.Annotations[ClusterCallbackURLAnnotation], message)
 
 		logger.Errorf("I was supposed to do something about cluster -->%s<--!", clusterName)
-
-		freshCopy.Annotations[ClusterRequestIDAnnotation] = ""
 	} else {
 		logger.Errorf("No annotation on cluster -->%s<--", clusterName)
 	}
@@ -266,4 +285,39 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 	}
 	// Something happened, so let's sleep and try again
 	return false
+}
+
+func (c *SDSClusterController) handleDeletedCluster(cluster *api.SDSCluster) {
+	cmagrpcClient, err := cmagrpc.CreateNewDefaultClient()
+	if err != nil {
+		logger.Errorf("could not create cma grpc client while waiting for cluster %s to delete", cluster.Name)
+	}
+	retryCount := 0
+	for retryCount < WaitForClusterChangeMaxTries {
+		_, err := cmagrpcClient.GetCluster(cmagrpc.GetClusterInput{Name: cluster.Name, Provider: cluster.Spec.Provider})
+		if err != nil {
+			logger.Errorf("Cluster %s is presumed to be deleted", cluster.Name)
+			message := &sdscallback.ClusterMessage{
+				State:        sdscallback.ClusterMessageStateCompleted,
+				StateText:    "Deleted",
+				ProgressRate: 100,
+			}
+			sdscallback.DoCallback(cluster.Annotations[ClusterCallbackURLAnnotation], message)
+			c.client.CmaV1alpha1().SDSClusters(viper.GetString(KubernetesNamespaceViperVariableName)).Delete(cluster.Name, &v1.DeleteOptions{})
+			return
+		}
+		time.Sleep(WaitForClusterChangeTimeInterval)
+		retryCount++
+	}
+	// We waited for the max number of retries, let's log it and bail
+	logger.Errorf("waited too long for cluster -->%s<-- to work right", cluster.Name)
+
+}
+
+func (c *SDSClusterController) handleFailedCluster(cluster *api.SDSCluster) {
+
+}
+
+func (c *SDSClusterController) handleUpgradedCluster(cluster *api.SDSCluster) {
+
 }

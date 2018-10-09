@@ -7,9 +7,9 @@ import (
 const (
 	ClusterPhaseNone              = ""
 	ClusterPhasePending           = "Pending"
-	ClusterPhaseWaitingForCluster = "Waiting for cluster"
-	ClusterPhaseUpgrading         = "Upgrading Cluster"
-	ClusterPhaseDeleting          = "Deleting cluster"
+	ClusterPhaseWaitingForCluster = "Waiting"
+	ClusterPhaseUpgrading         = "Upgrading"
+	ClusterPhaseDeleting          = "Deleting"
 	ClusterPhaseReady             = "Ready"
 	ClusterPhaseFailed            = "Failed"
 )

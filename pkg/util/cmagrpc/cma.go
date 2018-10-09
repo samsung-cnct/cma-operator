@@ -67,7 +67,7 @@ func (a *Client) GetCluster(input GetClusterInput) (GetClusterOutput, error) {
 	output := GetClusterOutput{
 		ID:         result.Cluster.Id,
 		Name:       result.Cluster.Name,
-		Status:     result.Cluster.Status,
+		Status:     result.Cluster.Status.String(),
 		Kubeconfig: result.Cluster.Kubeconfig,
 	}
 	return output, nil
