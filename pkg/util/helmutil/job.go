@@ -64,7 +64,7 @@ func GenerateHelmInstallJob(application sdsapi.SDSApplicationSpec) batchv1.Job {
 	commandString += "/helm repo update && "
 	commandString += "/helm install --tiller-namespace " + packageManager.Spec.Namespace + " --name " + application.Name
 	commandString += " --namespace " + application.Namespace + " --values /helm.values "
-	commandString += application.Chart.Name
+	commandString += application.Chart.Repository.Name + "/" + application.Chart.Name
 	commandString += ""
 
 	jobSpec := batchv1.JobSpec{
