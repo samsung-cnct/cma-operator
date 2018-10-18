@@ -3,6 +3,7 @@ package sds_cluster
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/docker/distribution/uuid"
 	"github.com/samsung-cnct/cma-operator/pkg/util/cmagrpc"
 	"github.com/samsung-cnct/cma-operator/pkg/util/sds/callback"
 	"github.com/spf13/viper"
@@ -31,6 +32,9 @@ const (
 	KubernetesNamespaceViperVariableName = "kubernetes-namespace"
 	ClusterRequestIDAnnotation           = "requestID"
 	ClusterCallbackURLAnnotation         = "callbackURL"
+	LoggingPackageManagerName            = "pm-logger"
+	LoggingApplicationName               = "logging-client"
+	LoggingNamespace                     = "logging"
 )
 
 var (
@@ -261,6 +265,86 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 			ClusterStatus:    clusterInfo.Status,
 			CreationDateTime: string(freshCopy.ObjectMeta.CreationTimestamp.Unix()),
 		})
+
+		// // check if logging package manager exists
+		clusterLoggingPackageManagerName := LoggingPackageManagerName + "-" + clusterName
+		_, err := c.client.CmaV1alpha1().SDSPackageManagers(viper.GetString(KubernetesNamespaceViperVariableName)).Get(clusterLoggingPackageManagerName, v1.GetOptions{})
+		if err != nil {
+			logger.Errorf("the logging package manager for cluster -->%s<-- does not exist! creating it", clusterName)
+
+			// create sdsPackageManager for logging
+			loggingPackageManager := &api.SDSPackageManager{
+				Spec: api.SDSPackageManagerSpec{
+					Name: LoggingPackageManagerName,
+					Namespace: LoggingNamespace,
+					Version: "v2.11.0",
+					Image: "gcr.io/kubernetes-helm/tiller",
+					ServiceAccount: api.ServiceAccount{
+						Name: LoggingPackageManagerName,
+						Namespace: LoggingNamespace,
+					},
+					Permissions: api.PackageManagerPermissions{
+						ClusterWide: true,
+						Namespaces: []string{
+							LoggingNamespace,
+						},
+					},
+					Cluster: api.SDSClusterRef{
+						Name: clusterName,
+					},
+				},
+			}
+
+			loggingPackageManager.Name = loggingPackageManager.Spec.Name + "-" + clusterName
+			loggingPackageManager.Namespace = viper.GetString(KubernetesNamespaceViperVariableName)
+
+			newLoggerPackageManager, err := c.client.CmaV1alpha1().SDSPackageManagers(viper.GetString(KubernetesNamespaceViperVariableName)).Create(loggingPackageManager)
+			if err != nil {
+				logger.Errorf("something bad happened when creating logging package manager for cluster -->%s<-- error: %s", clusterName, err)
+			}
+			logger.Infof("create logging package manager -->%s<-- for cluster -->%s<--", newLoggerPackageManager.Name, clusterName)
+		}
+
+		// check if logging application exists
+		clusterLoggingApplicationName := LoggingApplicationName + "-" + LoggingPackageManagerName + "-" + clusterName
+		_, err = c.client.CmaV1alpha1().SDSApplications(viper.GetString(KubernetesNamespaceViperVariableName)).Get(clusterLoggingApplicationName, v1.GetOptions{})
+		if err != nil {
+			logger.Errorf("the logging application for cluster -->%s<-- does not exist, we should create it,", clusterName)
+
+			// create sdsApplication for logging
+			// TODO: get the ElasticSearchHost
+			// TODO: get the elasticSearch Password
+			uuidForLogging := uuid.Generate()
+
+			loggerApplication := &api.SDSApplication{
+				Spec: api.SDSApplicationSpec{
+					PackageManager: api.SDSPackageManagerRef{
+						Name: LoggingPackageManagerName,
+					},
+					Namespace: LoggingNamespace,
+					Name: LoggingApplicationName,
+					Chart: api.Chart{
+						Name: LoggingApplicationName,
+						Repository: api.ChartRepository{
+							Name: LoggingApplicationName,
+							URL: "https://charts.migrations.cnct.io",
+						},
+					},
+					Values: "fluent-bit:\n name: fluent-bit\n cluster_uuid: " + uuidForLogging.String() + "\n elasticSearchHost: es.aws.uswest1.hybridstack.cnct.io\n elasticSearchPassword: changeme",
+					Cluster: api.SDSClusterRef{
+						Name: clusterName,
+					},
+				},
+			}
+			loggerApplication.Name = clusterLoggingApplicationName
+			loggerApplication.Namespace = viper.GetString(KubernetesNamespaceViperVariableName)
+			newLoggerApplication, err := c.client.CmaV1alpha1().SDSApplications(viper.GetString(KubernetesNamespaceViperVariableName)).Create(loggerApplication)
+			if err != nil {
+				logger.Errorf("something bad happened when creating the logging application for cluster -->%s<-- error: %s", clusterName, err)
+			}
+			logger.Infof("create logging application -->%s<-- for cluster -->%s<--", newLoggerApplication.Name, clusterName)
+		}
+		// End of logging
 
 		// Do Stuff here
 		message := &sdscallback.ClusterMessage{
