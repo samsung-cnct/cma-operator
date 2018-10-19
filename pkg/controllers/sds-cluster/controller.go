@@ -35,6 +35,9 @@ const (
 	LoggingPackageManagerName            = "pm-logger"
 	LoggingApplicationName               = "logging-client"
 	LoggingNamespace                     = "logging"
+	MetricServerApplicationName          = "metrics-server"
+	KubeSystemNamespace                  = "kube-system"
+	KubeSystemPackageManagerName         = "pm-kube-system"
 )
 
 var (
@@ -345,6 +348,83 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 			logger.Infof("create logging application -->%s<-- for cluster -->%s<--", newLoggerApplication.Name, clusterName)
 		}
 		// End of logging
+
+		// check kube-system package manager exists
+		clusterKubeSystemPackageManagerName := KubeSystemPackageManagerName + "-" + KubeSystemNamespace + "-" + clusterName
+		_, err = c.client.CmaV1alpha1().SDSApplications(KubeSystemNamespace).Get(clusterKubeSystemPackageManagerName, v1.GetOptions{})
+		if err != nil {
+			// create kube-system package manager
+			logger.Errorf("the kube-system package manager for cluster -->%s<-- does not exist! creating it", clusterName)
+
+			// create sdsPackageManager for kube-system
+			kubesystemPackageManager := &api.SDSPackageManager{
+				Spec: api.SDSPackageManagerSpec{
+					Name: KubeSystemPackageManagerName,
+					Namespace: KubeSystemNamespace,
+					Version: "v2.11.0",
+					Image: "gcr.io/kubernetes-helm/tiller",
+					ServiceAccount: api.ServiceAccount{
+						Name: KubeSystemPackageManagerName,
+						Namespace: KubeSystemNamespace,
+					},
+					Permissions: api.PackageManagerPermissions{
+						ClusterWide: true,
+						Namespaces: []string{
+							KubeSystemNamespace,
+						},
+					},
+					Cluster: api.SDSClusterRef{
+						Name: clusterName,
+					},
+				},
+			}
+
+			kubesystemPackageManager.Name = kubesystemPackageManager.Spec.Name + "-" + clusterName
+			kubesystemPackageManager.Namespace = viper.GetString(KubernetesNamespaceViperVariableName)
+
+			newKubeSystemPackageManager, err := c.client.CmaV1alpha1().SDSPackageManagers(viper.GetString(KubernetesNamespaceViperVariableName)).Create(kubesystemPackageManager)
+			if err != nil {
+				logger.Errorf("something bad happened when creating kube-system package manager for cluster -->%s<-- error: %s", clusterName, err)
+			}
+			logger.Infof("create kube-system package manager -->%s<-- for cluster -->%s<--", newKubeSystemPackageManager.Name, clusterName)
+		}
+		// check for kube-system Metric Server
+		clusterMetricServerApplicationName := MetricServerApplicationName + "-" + KubeSystemNamespace + "-" + clusterName
+		_, err = c.client.CmaV1alpha1().SDSApplications(viper.GetString(KubernetesNamespaceViperVariableName)).Get(clusterMetricServerApplicationName, v1.GetOptions{})
+		if err != nil {
+			// create kube-system metric server application
+			logger.Errorf("the metric-server application for cluster -->%s<-- does not exist, we should create it,", clusterName)
+
+			// create sdsApplication for metric server
+			metricServerApplication := &api.SDSApplication{
+				Spec: api.SDSApplicationSpec{
+					PackageManager: api.SDSPackageManagerRef{
+						Name: KubeSystemPackageManagerName,
+					},
+					Namespace: KubeSystemNamespace,
+					Name: MetricServerApplicationName,
+					Chart: api.Chart{
+						Name: MetricServerApplicationName,
+						Repository: api.ChartRepository{
+							Name: "stable",
+							URL: "https://kubernetes-charts.storage.googleapis.com",
+						},
+					},
+					Values: "rbac:\n create: true\n\nserviceAccount:\n create: true\n name: metrics-server\n\napiService:\n create: true\n\nimage:\n repository: gcr.io/google_containers/metrics-server-amd64\n tag: v0.3.1\n pullPolicy: IfNotPresent\n\nargs:\n - --logtostderr\n\nresources: {}\n\nnodeSelector: {}\n\ntolerations: []\n\naffinity: {} ",
+					Cluster: api.SDSClusterRef{
+						Name: clusterName,
+					},
+				},
+			}
+			metricServerApplication.Name = MetricServerApplicationName + "-" + clusterName
+			metricServerApplication.Namespace = viper.GetString(KubernetesNamespaceViperVariableName)
+			newMetricServerApplication, err := c.client.CmaV1alpha1().SDSApplications(viper.GetString(KubernetesNamespaceViperVariableName)).Create(metricServerApplication)
+			if err != nil {
+				logger.Errorf("something bad happened when creating the metrics-server application for cluster -->%s<-- error: %s", clusterName, err)
+			}
+			logger.Infof("create metrics-server application -->%s<-- for cluster -->%s<--", newMetricServerApplication.Name, clusterName)
+		}
+		// End of Metrics
 
 		// Do Stuff here
 		message := &sdscallback.ClusterMessage{
