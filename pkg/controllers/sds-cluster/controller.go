@@ -467,7 +467,7 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 		}
 		// End of state metrics
 
-		// kube-state-metrics
+		// nodelabelbot5000
 		nodeLabelBot5000ApplicationName := NodeLabelBot5000ApplicationName + "-" + KubeSystemNamespace + "-" + clusterName
 		_, err = c.client.CmaV1alpha1().SDSApplications(viper.GetString(KubernetesNamespaceViperVariableName)).Get(nodeLabelBot5000ApplicationName, v1.GetOptions{})
 		if err != nil {
@@ -481,9 +481,9 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 						Name: KubeSystemPackageManagerName,
 					},
 					Namespace: KubeSystemNamespace,
-					Name: StateMetricsApplicationName,
+					Name: NodeLabelBot5000ApplicationName,
 					Chart: api.Chart{
-						Name: StateMetricsApplicationName,
+						Name: NodeLabelBot5000ApplicationName,
 						Repository: api.ChartRepository{
 							Name: "sds",
 							URL: "https://pleasesetme",
@@ -503,7 +503,7 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 			}
 			logger.Infof("create nodelabelbot5000 application -->%s<-- for cluster -->%s<--", newNodeLabelBot5000Application.Name, clusterName)
 		}
-		// End of state metrics
+		// End of nodelabelbot5000
 
 		// Do Stuff here
 		message := &sdscallback.ClusterMessage{
