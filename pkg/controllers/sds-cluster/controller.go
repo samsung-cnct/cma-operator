@@ -486,7 +486,7 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 						Name: NodeLabelBot5000ApplicationName,
 						Repository: api.ChartRepository{
 							Name: "sds",
-							URL: "https://pleasesetme",
+							URL: "https://charts.migrations.cnct.io",
 						},
 					},
 					Values: "",
