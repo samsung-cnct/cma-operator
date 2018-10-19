@@ -38,6 +38,7 @@ const (
 	MetricServerApplicationName          = "metrics-server"
 	KubeSystemNamespace                  = "kube-system"
 	KubeSystemPackageManagerName         = "pm-kube-system"
+	StateMetricsApplicationName          = "kube-state-metrics"
 )
 
 var (
@@ -389,6 +390,7 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 			logger.Infof("create kube-system package manager -->%s<-- for cluster -->%s<--", newKubeSystemPackageManager.Name, clusterName)
 		}
 		// check for kube-system Metric Server
+		// TODO: check if a deployment named 'metrics-server' already exists
 		clusterMetricServerApplicationName := MetricServerApplicationName + "-" + KubeSystemNamespace + "-" + clusterName
 		_, err = c.client.CmaV1alpha1().SDSApplications(viper.GetString(KubernetesNamespaceViperVariableName)).Get(clusterMetricServerApplicationName, v1.GetOptions{})
 		if err != nil {
@@ -425,6 +427,44 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 			logger.Infof("create metrics-server application -->%s<-- for cluster -->%s<--", newMetricServerApplication.Name, clusterName)
 		}
 		// End of Metrics
+
+		// kube-state-metrics
+		clusterStateMetricsApplicationName := StateMetricsApplicationName + "-" + KubeSystemNamespace + "-" + clusterName
+		_, err = c.client.CmaV1alpha1().SDSApplications(viper.GetString(KubernetesNamespaceViperVariableName)).Get(clusterStateMetricsApplicationName, v1.GetOptions{})
+		if err != nil {
+			// create kube state metrics application
+			logger.Errorf("the kube-state-metrics application for cluster -->%s<-- does not exist, we should create it,", clusterName)
+
+			// create sdsApplication for kube-state-metrics
+			stateMetricsApplication := &api.SDSApplication{
+				Spec: api.SDSApplicationSpec{
+					PackageManager: api.SDSPackageManagerRef{
+						Name: KubeSystemPackageManagerName,
+					},
+					Namespace: KubeSystemNamespace,
+					Name: StateMetricsApplicationName,
+					Chart: api.Chart{
+						Name: StateMetricsApplicationName,
+						Repository: api.ChartRepository{
+							Name: "stable",
+							URL: "https://kubernetes-charts.storage.googleapis.com",
+						},
+					},
+					Values: "prometheusScrape: true\nimage:\n repository: quay.io/coreos/kube-state-metrics\n tag: v1.4.0\n pullPolicy: IfNotPresent\nservice:\n port: 8080\n # Default to clusterIP for backward compatibility\n type: ClusterIP\n nodePort: 0\n loadBalancerIP: ''\nrbac:\n create: true\nnodeSelector: {}\ntolerations: []\npodAnnotations: {}\ncollectors:\n cronjobs: true\n daemonsets: true\n deployments: true\n endpoints: true\n horizontalpodautoscalers: true\n jobs: true\n limitranges: true\n namespaces: true\n nodes: true\n persistentvolumeclaims: true\n persistentvolumes: true\n pods: true\n replicasets: true\n replicationcontrollers: true\n resourcequotas: true\n services: true\n statefulsets: true",
+					Cluster: api.SDSClusterRef{
+						Name: clusterName,
+					},
+				},
+			}
+			stateMetricsApplication.Name = StateMetricsApplicationName + "-" + clusterName
+			stateMetricsApplication.Namespace = viper.GetString(KubernetesNamespaceViperVariableName)
+			newStateMetricApplication, err := c.client.CmaV1alpha1().SDSApplications(viper.GetString(KubernetesNamespaceViperVariableName)).Create(stateMetricsApplication)
+			if err != nil {
+				logger.Errorf("something bad happened when creating the kube-state-metrics application for cluster -->%s<-- error: %s", clusterName, err)
+			}
+			logger.Infof("create kube-state-metrics application -->%s<-- for cluster -->%s<--", newStateMetricApplication.Name, clusterName)
+		}
+		// End of state metrics
 
 		// Do Stuff here
 		message := &sdscallback.ClusterMessage{
