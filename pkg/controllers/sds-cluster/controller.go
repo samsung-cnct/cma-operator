@@ -39,6 +39,7 @@ const (
 	KubeSystemNamespace                  = "kube-system"
 	KubeSystemPackageManagerName         = "pm-kube-system"
 	StateMetricsApplicationName          = "kube-state-metrics"
+	NodeLabelBot5000ApplicationName      = "nodelabelbot5000"
 )
 
 var (
@@ -465,6 +466,44 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 			logger.Infof("create kube-state-metrics application -->%s<-- for cluster -->%s<--", newStateMetricApplication.Name, clusterName)
 		}
 		// End of state metrics
+
+		// nodelabelbot5000
+		nodeLabelBot5000ApplicationName := NodeLabelBot5000ApplicationName + "-" + KubeSystemNamespace + "-" + clusterName
+		_, err = c.client.CmaV1alpha1().SDSApplications(viper.GetString(KubernetesNamespaceViperVariableName)).Get(nodeLabelBot5000ApplicationName, v1.GetOptions{})
+		if err != nil {
+			// create kube state metrics application
+			logger.Errorf("the nodelabelbot5000 application for cluster -->%s<-- does not exist, we should create it,", clusterName)
+
+			// create sdsApplication for kube-state-metrics
+			nodeLabelBot5000Application := &api.SDSApplication{
+				Spec: api.SDSApplicationSpec{
+					PackageManager: api.SDSPackageManagerRef{
+						Name: KubeSystemPackageManagerName,
+					},
+					Namespace: KubeSystemNamespace,
+					Name: NodeLabelBot5000ApplicationName,
+					Chart: api.Chart{
+						Name: NodeLabelBot5000ApplicationName,
+						Repository: api.ChartRepository{
+							Name: "sds",
+							URL: "https://charts.migrations.cnct.io",
+						},
+					},
+					Values: "",
+					Cluster: api.SDSClusterRef{
+						Name: clusterName,
+					},
+				},
+			}
+			nodeLabelBot5000Application.Name = NodeLabelBot5000ApplicationName + "-" + clusterName
+			nodeLabelBot5000Application.Namespace = viper.GetString(KubernetesNamespaceViperVariableName)
+			newNodeLabelBot5000Application, err := c.client.CmaV1alpha1().SDSApplications(viper.GetString(KubernetesNamespaceViperVariableName)).Create(nodeLabelBot5000Application)
+			if err != nil {
+				logger.Errorf("something bad happened when creating the nodelabelbot5000 application for cluster -->%s<-- error: %s", clusterName, err)
+			}
+			logger.Infof("create nodelabelbot5000 application -->%s<-- for cluster -->%s<--", newNodeLabelBot5000Application.Name, clusterName)
+		}
+		// End of nodelabelbot5000
 
 		// Do Stuff here
 		message := &sdscallback.ClusterMessage{
