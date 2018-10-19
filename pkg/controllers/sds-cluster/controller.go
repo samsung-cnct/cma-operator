@@ -472,7 +472,7 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 		_, err = c.client.CmaV1alpha1().SDSApplications(viper.GetString(KubernetesNamespaceViperVariableName)).Get(nodeLabelBot5000ApplicationName, v1.GetOptions{})
 		if err != nil {
 			// create kube state metrics application
-			logger.Errorf("the kube-state-metrics application for cluster -->%s<-- does not exist, we should create it,", clusterName)
+			logger.Errorf("the nodelabelbot5000 application for cluster -->%s<-- does not exist, we should create it,", clusterName)
 
 			// create sdsApplication for kube-state-metrics
 			nodeLabelBot5000Application := &api.SDSApplication{
