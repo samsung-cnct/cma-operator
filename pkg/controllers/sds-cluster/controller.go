@@ -523,7 +523,7 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 						Namespace: KubeSystemNamespace,
 						Name:      nginxMonitoringProxyApplicationName,
 						Chart: api.Chart{
-							Name: nginxMonitoringProxyApplicationName,
+							Name: MonitoringProxyApplicationName,
 							Repository: api.ChartRepository{
 								Name: "sds",
 								URL:  "https://charts.migrations.cnct.io",
