@@ -40,6 +40,7 @@ const (
 	KubeSystemPackageManagerName         = "pm-kube-system"
 	StateMetricsApplicationName          = "kube-state-metrics"
 	NodeLabelBot5000ApplicationName      = "nodelabelbot5000"
+	MonitoringProxyApplicationName       = "nginx-k8smon"
 )
 
 var (
@@ -504,6 +505,46 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 			logger.Infof("create nodelabelbot5000 application -->%s<-- for cluster -->%s<--", newNodeLabelBot5000Application.Name, clusterName)
 		}
 		// End of nodelabelbot5000
+
+		// nginx-k8smon
+		if freshCopy.Spec.Provider == "aws" {
+			nginxMonitoringProxyApplicationName := MonitoringProxyApplicationName + "-" + KubeSystemNamespace + "-" + clusterName
+			_, err = c.client.CmaV1alpha1().SDSApplications(viper.GetString(KubernetesNamespaceViperVariableName)).Get(nginxMonitoringProxyApplicationName, v1.GetOptions{})
+			if err != nil {
+				// create kube state metrics application
+				logger.Errorf("the nginx-k8smon application for cluster -->%s<-- does not exist, we should create it,", clusterName)
+
+				// create sdsApplication for kube-state-metrics
+				nginxMonitoringProxyApplication := &api.SDSApplication{
+					Spec: api.SDSApplicationSpec{
+						PackageManager: api.SDSPackageManagerRef{
+							Name: KubeSystemPackageManagerName,
+						},
+						Namespace: KubeSystemNamespace,
+						Name:      nginxMonitoringProxyApplicationName,
+						Chart: api.Chart{
+							Name: MonitoringProxyApplicationName,
+							Repository: api.ChartRepository{
+								Name: "sds",
+								URL:  "https://charts.migrations.cnct.io",
+							},
+						},
+						Values: "",
+						Cluster: api.SDSClusterRef{
+							Name: clusterName,
+						},
+					},
+				}
+				nginxMonitoringProxyApplication.Name = nginxMonitoringProxyApplicationName + "-" + clusterName
+				nginxMonitoringProxyApplication.Namespace = viper.GetString(nginxMonitoringProxyApplicationName)
+				newnginxMonitoringProxyApplication, err := c.client.CmaV1alpha1().SDSApplications(viper.GetString(KubernetesNamespaceViperVariableName)).Create(nginxMonitoringProxyApplication)
+				if err != nil {
+					logger.Errorf("something bad happened when creating the nginx-k8smon application for cluster -->%s<-- error: %s", clusterName, err)
+				}
+				logger.Infof("create nginx-k8smon application -->%s<-- for cluster -->%s<--", newnginxMonitoringProxyApplication.Name, clusterName)
+			}
+		}
+		// End of nginx-ks8mon
 
 		// Do Stuff here
 		message := &sdscallback.ClusterMessage{
