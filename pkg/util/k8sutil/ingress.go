@@ -11,33 +11,33 @@ import (
 
 func GenerateIngress(name string, cluster string, service string) v1beta1.Ingress {
 
-	annotations := map[string]string {
-		"kubernetes.io/ingress.class": "nginx",
+	annotations := map[string]string{
+		"kubernetes.io/ingress.class":                  "nginx",
 		"nginx.ingress.kubernetes.io/backend-protocol": "HTTPS",
-		"nginx.ingress.kubernetes.io/ssl-redirect": "true",
-		"nginx.ingress.kubernetes.io/rewrite-target": "/",
+		"nginx.ingress.kubernetes.io/ssl-redirect":     "true",
+		"nginx.ingress.kubernetes.io/rewrite-target":   "/",
 	}
 
-	return v1beta1.Ingress {
+	return v1beta1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
+			Name:        name,
 			Annotations: annotations,
 		},
 		Spec: v1beta1.IngressSpec{
 			TLS: []v1beta1.IngressTLS{
 				{
 					SecretName: "cma-api-proxy-tls",
-					Hosts: []string {
+					Hosts: []string{
 						viper.GetString("cma-api-proxy"),
 					},
 				},
 			},
-			Rules: []v1beta1.IngressRule {
+			Rules: []v1beta1.IngressRule{
 				{
 					Host: viper.GetString("cma-api-proxy"),
-					IngressRuleValue: v1beta1.IngressRuleValue {
-						HTTP: &v1beta1.HTTPIngressRuleValue {
-							Paths: []v1beta1.HTTPIngressPath {
+					IngressRuleValue: v1beta1.IngressRuleValue{
+						HTTP: &v1beta1.HTTPIngressRuleValue{
+							Paths: []v1beta1.HTTPIngressPath{
 								{
 									Path: "/" + cluster,
 									Backend: v1beta1.IngressBackend{

@@ -15,9 +15,9 @@ func GenerateExternalService(name string, externalName string) corev1.Service {
 		},
 
 		Spec: corev1.ServiceSpec{
-			Type: corev1.ServiceTypeExternalName,
+			Type:         corev1.ServiceTypeExternalName,
 			ExternalName: externalName,
-			Ports: []corev1.ServicePort {
+			Ports: []corev1.ServicePort{
 				{
 					Port: 443,
 					TargetPort: intstr.IntOrString{
@@ -30,7 +30,6 @@ func GenerateExternalService(name string, externalName string) corev1.Service {
 		},
 	}
 }
-
 
 func CreateExternalService(schema corev1.Service, namespace string, config *rest.Config) (bool, error) {
 	SetLogger()
