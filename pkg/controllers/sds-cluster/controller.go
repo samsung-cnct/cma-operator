@@ -40,6 +40,8 @@ const (
 	KubeSystemPackageManagerName         = "pm-kube-system"
 	StateMetricsApplicationName          = "kube-state-metrics"
 	NodeLabelBot5000ApplicationName      = "nodelabelbot5000"
+	ApiEndpointIngressName      		 = "k8s-api-ingress-for"
+	ApiEndpointBackendServiceName        = "k8s-api-service-for"
 	MonitoringProxyApplicationName       = "nginx-k8smon"
 )
 
@@ -545,6 +547,24 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 			}
 		}
 		// End of nginx-ks8mon
+
+		// ingress and service for managed cluster api server
+		clusterApiEndpointServiceName := ApiEndpointBackendServiceName + "-" + clusterName
+		_, err = k8sutil.CreateExternalService(
+			k8sutil.GenerateExternalService(clusterApiEndpointServiceName, "TODO HERE"),
+			clusterName,nil)
+		if err != nil {
+			logger.Errorf("something bad happened when creating the service for cluster -->%s<-- error: %s", clusterName, err)
+		}
+
+		clusterApiEndpointIngressName := ApiEndpointIngressName + "-" + clusterName
+		_, err = k8sutil.CreateIngress(
+			k8sutil.GenerateIngress(clusterApiEndpointIngressName, clusterName, clusterApiEndpointServiceName),
+			clusterName, freshCopy.Spec.Provider, nil)
+		if err != nil {
+			logger.Errorf("something bad happened when creating the ingress for cluster -->%s<-- error: %s", clusterName, err)
+		}
+
 
 		// Do Stuff here
 		message := &sdscallback.ClusterMessage{
