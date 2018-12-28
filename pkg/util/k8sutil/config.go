@@ -1,11 +1,12 @@
 package k8sutil
 
 import (
-	"os"
-	"path/filepath"
-
+	"io/ioutil"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"net/url"
+	"os"
+	"path/filepath"
 )
 
 var (
@@ -35,4 +36,32 @@ func GenerateKubernetesConfig() (*rest.Config, error) {
 			return rest.InClusterConfig()
 		}
 	}
+}
+
+func GetClusterEndpoint(kubeconfig string) (string, error) {
+	// Let's create a tempfile and line it up for removal
+	file, err := ioutil.TempFile(os.TempDir(), "kraken-kubeconfig")
+	defer func() {
+		_ = os.Remove(file.Name())
+	}()
+
+	if err != nil {
+		return "", err
+	}
+	_, err = file.WriteString(kubeconfig)
+	if err != nil {
+		return "", err
+	}
+
+	clusterConfig, err := clientcmd.BuildConfigFromFlags("", file.Name())
+	if err != nil {
+		return "", err
+	}
+
+	hostUrl, err := url.Parse(clusterConfig.Host)
+	if err != nil {
+		return "", err
+	}
+
+	return hostUrl.Hostname(), nil
 }

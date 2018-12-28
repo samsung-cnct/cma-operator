@@ -548,10 +548,16 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 		}
 		// End of nginx-ks8mon
 
+		// parse the kubeconfig string for api endpoint
 		// ingress and service for managed cluster api server
 		clusterApiEndpointServiceName := ApiEndpointBackendServiceName + "-" + clusterName
+		apiEndpoint, err := k8sutil.GetClusterEndpoint(clusterInfo.Kubeconfig)
+		if err != nil {
+			logger.Errorf("something bad happened when getting api endpoint for cluster -->%s<-- error: %s", clusterName, err)
+		}
+
 		_, err = k8sutil.CreateExternalService(
-			k8sutil.GenerateExternalService(clusterApiEndpointServiceName, "TODO HERE"),
+			k8sutil.GenerateExternalService(clusterApiEndpointServiceName, apiEndpoint),
 			clusterName,nil)
 		if err != nil {
 			logger.Errorf("something bad happened when creating the service for cluster -->%s<-- error: %s", clusterName, err)
