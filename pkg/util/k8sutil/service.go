@@ -1,8 +1,11 @@
 package k8sutil
 
 import (
+	api "github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1"
+	"github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtimeSchema "k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -31,7 +34,7 @@ func GenerateExternalService(name string, externalName string) corev1.Service {
 	}
 }
 
-func CreateExternalService(schema corev1.Service, namespace string, config *rest.Config) (bool, error) {
+func CreateExternalService(schema corev1.Service, namespace string, sdsCluster *v1alpha1.SDSCluster, config *rest.Config) (bool, error) {
 	SetLogger()
 	if config == nil {
 		config = DefaultConfig
@@ -41,6 +44,15 @@ func CreateExternalService(schema corev1.Service, namespace string, config *rest
 	if err != nil {
 		logger.Errorf("Cannot establish a client connection to kubernetes: %v", err)
 		return false, err
+	}
+
+	schema.ObjectMeta.OwnerReferences = []metav1.OwnerReference{
+		*metav1.NewControllerRef(sdsCluster,
+			runtimeSchema.GroupVersionKind{
+				Group:   api.SchemeGroupVersion.Group,
+				Version: api.SchemeGroupVersion.Version,
+				Kind:    "SDSCluster",
+			}),
 	}
 
 	_, err = clientSet.CoreV1().Services(namespace).Create(&schema)

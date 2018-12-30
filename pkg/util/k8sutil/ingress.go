@@ -1,9 +1,12 @@
 package k8sutil
 
 import (
+	api "github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1"
+	"github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1"
 	"github.com/spf13/viper"
 	"k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtimeSchema "k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -57,7 +60,7 @@ func GenerateIngress(name string, cluster string, service string) v1beta1.Ingres
 	}
 }
 
-func CreateIngress(schema v1beta1.Ingress, namespace string, provider string, config *rest.Config) (bool, error) {
+func CreateIngress(schema v1beta1.Ingress, namespace string, sdsCluster *v1alpha1.SDSCluster, config *rest.Config) (bool, error) {
 	SetLogger()
 	if config == nil {
 		config = DefaultConfig
@@ -69,7 +72,7 @@ func CreateIngress(schema v1beta1.Ingress, namespace string, provider string, co
 		return false, err
 	}
 
-	if provider == "azure" {
+	if sdsCluster.Spec.Provider == "azure" {
 		backendService, err := clientSet.CoreV1().Services(namespace).Get(
 			schema.Spec.Rules[0].IngressRuleValue.HTTP.Paths[0].Backend.ServiceName,
 			metav1.GetOptions{})
@@ -84,6 +87,16 @@ func CreateIngress(schema v1beta1.Ingress, namespace string, provider string, co
 			"set $pass_access_scheme \"https\";\n" +
 			"proxy_set_header Host $best_http_host;\n" +
 			"proxy_set_header X-Forwarded-Proto $scheme;"
+	}
+
+	// set owner reference
+	schema.ObjectMeta.OwnerReferences = []metav1.OwnerReference{
+		*metav1.NewControllerRef(sdsCluster,
+			runtimeSchema.GroupVersionKind{
+				Group:   api.SchemeGroupVersion.Group,
+				Version: api.SchemeGroupVersion.Version,
+				Kind:    "SDSCluster",
+			}),
 	}
 
 	_, err = clientSet.ExtensionsV1beta1().Ingresses(namespace).Create(&schema)
