@@ -10,4 +10,6 @@ cma:
    enabled: false
    endpoint: cma-grpc.cnct.io:443
    insecure: false
+   apiProxyEndpoint: proxy.uswest1.cnct.io
+   apiProxyTls: cma-api-proxy-tls
 

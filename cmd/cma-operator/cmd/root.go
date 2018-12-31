@@ -44,6 +44,7 @@ func init() {
 	rootCmd.Flags().String("kubeconfig", "", "Location of kubeconfig file")
 	rootCmd.Flags().String("kubernetes-namespace", "default", "Namespace to operate on")
 	rootCmd.Flags().String("cma-endpoint", "", "Location of the Cluster Manager API GRPC service")
+	rootCmd.Flags().String("cma-api-proxy-tls", "cma-api-proxy-tls", "Secret containing cma api proxy tls cert")
 	rootCmd.Flags().String("cma-api-proxy", "", "DNS name for managed cluster api proxy")
 	rootCmd.Flags().Bool("cma-insecure", true, "If we are not connecting to Cluster Manager API GRPC service over HTTPS")
 
@@ -51,6 +52,7 @@ func init() {
 	viper.BindPFlag("kubernetes-namespace", rootCmd.Flags().Lookup("kubernetes-namespace"))
 	viper.BindPFlag("cma-endpoint", rootCmd.Flags().Lookup("cma-endpoint"))
 	viper.BindPFlag("cma-api-proxy", rootCmd.Flags().Lookup("cma-api-proxy"))
+	viper.BindPFlag("cma-api-proxy-tls", rootCmd.Flags().Lookup("cma-api-proxy-tls"))
 	viper.BindPFlag("cma-insecure", rootCmd.Flags().Lookup("cma-insecure"))
 
 	viper.AutomaticEnv()

@@ -29,7 +29,7 @@ func GenerateIngress(name string, cluster string, service string) v1beta1.Ingres
 		Spec: v1beta1.IngressSpec{
 			TLS: []v1beta1.IngressTLS{
 				{
-					SecretName: "cma-api-proxy-tls",
+					SecretName: viper.GetString("cma-api-proxy-tls"),
 					Hosts: []string{
 						viper.GetString("cma-api-proxy"),
 					},
