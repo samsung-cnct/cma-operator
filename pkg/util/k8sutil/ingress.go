@@ -1,8 +1,8 @@
 package k8sutil
 
 import (
-	api "github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1"
 	"github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1"
+	api "github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1"
 	"github.com/spf13/viper"
 	"k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -60,7 +60,7 @@ func GenerateIngress(name string, cluster string, service string) v1beta1.Ingres
 	}
 }
 
-func CreateIngress(schema v1beta1.Ingress, namespace string, sdsCluster *v1alpha1.SDSCluster, config *rest.Config) (bool, error) {
+func CreateIngress(schema v1beta1.Ingress, sdsCluster *v1alpha1.SDSCluster, config *rest.Config) (bool, error) {
 	SetLogger()
 	if config == nil {
 		config = DefaultConfig
@@ -73,12 +73,12 @@ func CreateIngress(schema v1beta1.Ingress, namespace string, sdsCluster *v1alpha
 	}
 
 	if sdsCluster.Spec.Provider == "azure" {
-		backendService, err := clientSet.CoreV1().Services(namespace).Get(
+		backendService, err := clientSet.CoreV1().Services(sdsCluster.GetNamespace()).Get(
 			schema.Spec.Rules[0].IngressRuleValue.HTTP.Paths[0].Backend.ServiceName,
 			metav1.GetOptions{})
 		if err != nil {
 			logger.Infof("Could not get backend service for ingress -->%s<-- in namespace -->%s<--, error was %v",
-				schema.ObjectMeta.Name, namespace, err)
+				schema.ObjectMeta.Name, sdsCluster.GetNamespace(), err)
 			return false, err
 		}
 
@@ -99,12 +99,14 @@ func CreateIngress(schema v1beta1.Ingress, namespace string, sdsCluster *v1alpha
 			}),
 	}
 
-	_, err = clientSet.ExtensionsV1beta1().Ingresses(namespace).Create(&schema)
+	_, err = clientSet.ExtensionsV1beta1().Ingresses(sdsCluster.GetNamespace()).Create(&schema)
 	if err != nil && !IsResourceAlreadyExistsError(err) {
-		logger.Infof("Ingress -->%s<-- in namespace -->%s<-- Cannot be created, error was %v", schema.ObjectMeta.Name, namespace, err)
+		logger.Infof("Ingress -->%s<-- in namespace -->%s<-- Cannot be created, error was %v",
+			schema.ObjectMeta.Name, sdsCluster.GetNamespace(), err)
 		return false, err
 	} else if IsResourceAlreadyExistsError(err) {
-		logger.Infof("Ingress -->%s<-- in namespace -->%s<-- Already exists, cannot recreate", schema.ObjectMeta.Name, namespace)
+		logger.Infof("Ingress -->%s<-- in namespace -->%s<-- Already exists, cannot recreate",
+			schema.ObjectMeta.Name, sdsCluster.GetNamespace())
 		return false, err
 	}
 	return true, nil

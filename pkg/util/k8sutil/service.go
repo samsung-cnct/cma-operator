@@ -1,8 +1,8 @@
 package k8sutil
 
 import (
-	api "github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1"
 	"github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1"
+	api "github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtimeSchema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -34,7 +34,7 @@ func GenerateExternalService(name string, externalName string) corev1.Service {
 	}
 }
 
-func CreateExternalService(schema corev1.Service, namespace string, sdsCluster *v1alpha1.SDSCluster, config *rest.Config) (bool, error) {
+func CreateExternalService(schema corev1.Service, sdsCluster *v1alpha1.SDSCluster, config *rest.Config) (bool, error) {
 	SetLogger()
 	if config == nil {
 		config = DefaultConfig
@@ -55,12 +55,14 @@ func CreateExternalService(schema corev1.Service, namespace string, sdsCluster *
 			}),
 	}
 
-	_, err = clientSet.CoreV1().Services(namespace).Create(&schema)
+	_, err = clientSet.CoreV1().Services(sdsCluster.GetNamespace()).Create(&schema)
 	if err != nil && !IsResourceAlreadyExistsError(err) {
-		logger.Infof("Service -->%s<-- in namespace -->%s<-- Cannot be created, error was %v", schema.ObjectMeta.Name, namespace, err)
+		logger.Infof("Service -->%s<-- in namespace -->%s<-- Cannot be created, error was %v",
+			schema.ObjectMeta.Name, sdsCluster.GetNamespace(), err)
 		return false, err
 	} else if IsResourceAlreadyExistsError(err) {
-		logger.Infof("Service -->%s<-- in namespace -->%s<-- Already exists, cannot recreate", schema.ObjectMeta.Name, namespace)
+		logger.Infof("Service -->%s<-- in namespace -->%s<-- Already exists, cannot recreate",
+			schema.ObjectMeta.Name, sdsCluster.GetNamespace())
 		return false, err
 	}
 	return true, nil

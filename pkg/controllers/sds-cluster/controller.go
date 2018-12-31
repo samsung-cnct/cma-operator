@@ -558,7 +558,7 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 
 		_, err = k8sutil.CreateExternalService(
 			k8sutil.GenerateExternalService(clusterApiEndpointServiceName, apiEndpoint),
-			clusterName, freshCopy, nil)
+				freshCopy, nil)
 		if err != nil {
 			logger.Errorf("something bad happened when creating the service for cluster -->%s<-- error: %s", clusterName, err)
 		}
@@ -566,7 +566,7 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 		clusterApiEndpointIngressName := ApiEndpointIngressName + "-" + clusterName
 		_, err = k8sutil.CreateIngress(
 			k8sutil.GenerateIngress(clusterApiEndpointIngressName, clusterName, clusterApiEndpointServiceName),
-			clusterName, freshCopy, nil)
+				freshCopy, nil)
 		if err != nil {
 			logger.Errorf("something bad happened when creating the ingress for cluster -->%s<-- error: %s", clusterName, err)
 		}
