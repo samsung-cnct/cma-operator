@@ -26,6 +26,10 @@ spec:
         {{- if .Values.cma.enabled }}
         - name: CMAOPERATOR_CMA_ENDPOINT
           value: "{{.Values.cma.endpoint }}"
+        - name: CMAOPERATOR_CMA_API_PROXY
+          value: "{{.Values.cma.apiProxyEndpoint }}"
+        - name: CMAOPERATOR_CMA_API_PROXY_TLS
+          value: "{{.Values.cma.apiProxyTls }}"
         - name: CMAOPERATOR_CMA_INSECURE
           value: "{{.Values.cma.insecure }}"
         {{- end }}

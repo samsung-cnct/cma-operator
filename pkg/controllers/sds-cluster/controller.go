@@ -40,6 +40,8 @@ const (
 	KubeSystemPackageManagerName         = "pm-kube-system"
 	StateMetricsApplicationName          = "kube-state-metrics"
 	NodeLabelBot5000ApplicationName      = "nodelabelbot5000"
+	ApiEndpointIngressName               = "k8s-api-ingress-for"
+	ApiEndpointBackendServiceName        = "k8s-api-service-for"
 	MonitoringProxyApplicationName       = "nginx-k8smon"
 )
 
@@ -281,12 +283,12 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 			// create sdsPackageManager for logging
 			loggingPackageManager := &api.SDSPackageManager{
 				Spec: api.SDSPackageManagerSpec{
-					Name: LoggingPackageManagerName,
+					Name:      LoggingPackageManagerName,
 					Namespace: LoggingNamespace,
-					Version: "v2.11.0",
-					Image: "gcr.io/kubernetes-helm/tiller",
+					Version:   "v2.11.0",
+					Image:     "gcr.io/kubernetes-helm/tiller",
 					ServiceAccount: api.ServiceAccount{
-						Name: LoggingPackageManagerName,
+						Name:      LoggingPackageManagerName,
 						Namespace: LoggingNamespace,
 					},
 					Permissions: api.PackageManagerPermissions{
@@ -328,12 +330,12 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 						Name: LoggingPackageManagerName,
 					},
 					Namespace: LoggingNamespace,
-					Name: LoggingApplicationName,
+					Name:      LoggingApplicationName,
 					Chart: api.Chart{
 						Name: LoggingApplicationName,
 						Repository: api.ChartRepository{
 							Name: LoggingApplicationName,
-							URL: "https://charts.migrations.cnct.io",
+							URL:  "https://charts.migrations.cnct.io",
 						},
 					},
 					Values: "fluent-bit:\n name: fluent-bit\n cluster_uuid: " + uuidForLogging.String() + "\n elasticSearchHost: es.aws.uswest1.hybridstack.cnct.io\n elasticSearchPassword: changeme",
@@ -362,12 +364,12 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 			// create sdsPackageManager for kube-system
 			kubesystemPackageManager := &api.SDSPackageManager{
 				Spec: api.SDSPackageManagerSpec{
-					Name: KubeSystemPackageManagerName,
+					Name:      KubeSystemPackageManagerName,
 					Namespace: KubeSystemNamespace,
-					Version: "v2.11.0",
-					Image: "gcr.io/kubernetes-helm/tiller",
+					Version:   "v2.11.0",
+					Image:     "gcr.io/kubernetes-helm/tiller",
 					ServiceAccount: api.ServiceAccount{
-						Name: KubeSystemPackageManagerName,
+						Name:      KubeSystemPackageManagerName,
 						Namespace: KubeSystemNamespace,
 					},
 					Permissions: api.PackageManagerPermissions{
@@ -406,12 +408,12 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 						Name: KubeSystemPackageManagerName,
 					},
 					Namespace: KubeSystemNamespace,
-					Name: MetricServerApplicationName,
+					Name:      MetricServerApplicationName,
 					Chart: api.Chart{
 						Name: MetricServerApplicationName,
 						Repository: api.ChartRepository{
 							Name: "stable",
-							URL: "https://kubernetes-charts.storage.googleapis.com",
+							URL:  "https://kubernetes-charts.storage.googleapis.com",
 						},
 					},
 					Values: "rbac:\n create: true\n\nserviceAccount:\n create: true\n name: metrics-server\n\napiService:\n create: true\n\nimage:\n repository: gcr.io/google_containers/metrics-server-amd64\n tag: v0.3.1\n pullPolicy: IfNotPresent\n\nargs:\n - --logtostderr\n\nresources: {}\n\nnodeSelector: {}\n\ntolerations: []\n\naffinity: {} ",
@@ -444,12 +446,12 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 						Name: KubeSystemPackageManagerName,
 					},
 					Namespace: KubeSystemNamespace,
-					Name: StateMetricsApplicationName,
+					Name:      StateMetricsApplicationName,
 					Chart: api.Chart{
 						Name: StateMetricsApplicationName,
 						Repository: api.ChartRepository{
 							Name: "stable",
-							URL: "https://kubernetes-charts.storage.googleapis.com",
+							URL:  "https://kubernetes-charts.storage.googleapis.com",
 						},
 					},
 					Values: "prometheusScrape: true\nimage:\n repository: quay.io/coreos/kube-state-metrics\n tag: v1.4.0\n pullPolicy: IfNotPresent\nservice:\n port: 8080\n # Default to clusterIP for backward compatibility\n type: ClusterIP\n nodePort: 0\n loadBalancerIP: ''\nrbac:\n create: true\nnodeSelector: {}\ntolerations: []\npodAnnotations: {}\ncollectors:\n cronjobs: true\n daemonsets: true\n deployments: true\n endpoints: true\n horizontalpodautoscalers: true\n jobs: true\n limitranges: true\n namespaces: true\n nodes: true\n persistentvolumeclaims: true\n persistentvolumes: true\n pods: true\n replicasets: true\n replicationcontrollers: true\n resourcequotas: true\n services: true\n statefulsets: true",
@@ -482,12 +484,12 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 						Name: KubeSystemPackageManagerName,
 					},
 					Namespace: KubeSystemNamespace,
-					Name: NodeLabelBot5000ApplicationName,
+					Name:      NodeLabelBot5000ApplicationName,
 					Chart: api.Chart{
 						Name: NodeLabelBot5000ApplicationName,
 						Repository: api.ChartRepository{
 							Name: "sds",
-							URL: "https://charts.migrations.cnct.io",
+							URL:  "https://charts.migrations.cnct.io",
 						},
 					},
 					Values: "",
@@ -545,6 +547,29 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 			}
 		}
 		// End of nginx-ks8mon
+
+		// parse the kubeconfig string for api endpoint
+		// ingress and service for managed cluster api server
+		clusterApiEndpointServiceName := ApiEndpointBackendServiceName + "-" + clusterName
+		apiEndpoint, err := k8sutil.GetClusterEndpoint(clusterInfo.Kubeconfig)
+		if err != nil {
+			logger.Errorf("something bad happened when getting api endpoint for cluster -->%s<-- error: %s", clusterName, err)
+		}
+
+		_, err = k8sutil.CreateExternalService(
+			k8sutil.GenerateExternalService(clusterApiEndpointServiceName, apiEndpoint),
+				freshCopy, nil)
+		if err != nil {
+			logger.Errorf("something bad happened when creating the service for cluster -->%s<-- error: %s", clusterName, err)
+		}
+
+		clusterApiEndpointIngressName := ApiEndpointIngressName + "-" + clusterName
+		_, err = k8sutil.CreateIngress(
+			k8sutil.GenerateIngress(clusterApiEndpointIngressName, clusterName, clusterApiEndpointServiceName),
+				freshCopy, nil)
+		if err != nil {
+			logger.Errorf("something bad happened when creating the ingress for cluster -->%s<-- error: %s", clusterName, err)
+		}
 
 		// Do Stuff here
 		message := &sdscallback.ClusterMessage{
