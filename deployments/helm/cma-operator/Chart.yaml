@@ -1,5 +1,5 @@
 name: cma-operator
-version: 0.1.1
+version: 0.1.2
 description: The Cluster Manager API Operator
 keywords:
 - hybridstack
