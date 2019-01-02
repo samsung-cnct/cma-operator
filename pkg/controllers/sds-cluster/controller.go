@@ -6,6 +6,7 @@ import (
 	"github.com/docker/distribution/uuid"
 	"github.com/samsung-cnct/cma-operator/pkg/util/cmagrpc"
 	"github.com/samsung-cnct/cma-operator/pkg/util/sds/callback"
+	"github.com/samsung-cnct/cma-operator/pkg/util/sds/token"
 	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"time"
@@ -570,6 +571,17 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 		if err != nil {
 			logger.Errorf("something bad happened when creating the ingress for cluster -->%s<-- error: %s", clusterName, err)
 		}
+
+		// bearer token service account
+		sdsTokenClient, err := sdstoken.NewSDSTokenClient(nil)
+		if err != nil {
+			logger.Errorf("unable to create new sds token client", err)
+		}
+		_, err = sdsTokenClient.CreateSDSToken(freshCopy, viper.GetString(KubernetesNamespaceViperVariableName))
+		if err != nil {
+			logger.Errorf("unable to create sds token, error message: %s", err)
+		}
+		// End bearer token service account
 
 		// Do Stuff here
 		message := &sdscallback.ClusterMessage{

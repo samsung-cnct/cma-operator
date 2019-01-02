@@ -37,3 +37,22 @@ func CreateServiceAccount(schema corev1.ServiceAccount, namespace string, config
 	}
 	return true, nil
 }
+
+func GetTokenNameFromServiceAccount(name string, namespace string, config *rest.Config) (string, error) {
+	SetLogger()
+	if config == nil {
+		config = DefaultConfig
+	}
+
+	clientSet, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		logger.Errorf("Cannot establish a client connection to kubernetes: %v", err)
+		return "", err
+	}
+	serviceAccount, err := clientSet.CoreV1().ServiceAccounts(namespace).Get(name, metav1.GetOptions{})
+	if err != nil {
+		logger.Errorf("ServiceAccount token -->%s<-- in namespace -->%s<-- cannot be retrieved, error was %s", name, namespace, err)
+		return "", err
+	}
+	return serviceAccount.Secrets[0].Name, nil
+}
