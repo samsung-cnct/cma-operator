@@ -2,6 +2,7 @@ package sdstoken
 
 import (
 	"github.com/golang/glog"
+	"github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1"
 	"github.com/samsung-cnct/cma-operator/pkg/generated/cma/client/clientset/versioned"
 	"github.com/samsung-cnct/cma-operator/pkg/util/cmagrpc"
 	"github.com/samsung-cnct/cma-operator/pkg/util/helmutil"
@@ -42,7 +43,8 @@ func NewSDSTokenClient(config *rest.Config) (*SDSTokenClient, error) {
 	return output, nil
 }
 
-func (c *SDSTokenClient) CreateSDSToken(clusterName string, namespace string) (bool, error){
+func (c *SDSTokenClient) CreateSDSToken(sdsCluster *v1alpha1.SDSCluster, namespace string) (bool, error){
+	clusterName := sdsCluster.Name
 
 	config, err := c.getRestConfigForRemoteCluster(clusterName, namespace, nil)
 	if err != nil {
@@ -79,12 +81,11 @@ func (c *SDSTokenClient) CreateSDSToken(clusterName string, namespace string) (b
 	}
 
 	// save token as secret in cmc
-	err = k8sutil.CreateSecret(clusterName + "-" + SDSServiceAccountName + "-token", namespace, "token", secret.Data["token"], nil)
+	err = k8sutil.CreateSecret(clusterName + "-" + SDSServiceAccountName + "-token", namespace, sdsCluster, "token", secret.Data["token"], nil)
 	if err != nil {
 		logger.Infof("could not save token -->%s<-- for service account -->%s<--, due to the following error %s", tokenName, SDSServiceAccountName, err)
 	}
 
-	logger.Info("created %s token", SDSServiceAccountName)
 	return true, nil
 }
 
