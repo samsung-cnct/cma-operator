@@ -53,3 +53,26 @@ All new managed clusters will be created with an [ingress](https://kubernetes.io
 2. Using the "bearertoken" from the output above you can now make api calls to the managed cluster:
     * example:
     `curl https://<ProxyDNSname>/<clusterName>/api/v1/<API path> -H "Authorization: Bearer <bearerToken>" [--insecure]`
+
+#### Custom Resources
+* SDSClusters
+* SDSPackageManagers
+* SDSApplications
+* SDSAppBundles
+
+
+#### How to create new Custom Resources in this repo:
+
+
+#### How to test this repo:
+1. run cluster-manager-api (see repo for details)
+2. confirm your `kubectl config current-context` is pointing to the cluster you want to test with (ex: minikube)
+3. run the following command from the root of the cma-operator directory 
+```
+CMAOPERATOR_CMA_ENDPOINT=localhost:9050 CMAOPERATOR_CMA_INSECURE=true go run cmd/cma-operator/main.go
+```
+* note the environment variables are pointing to the location of the cluster-manager-api from step 1. 
+
+Additional flags available: (add to the end of command above)
+* proxy test: `--cma-api-proxy sample.example.com`
+
