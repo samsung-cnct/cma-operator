@@ -1,5 +1,5 @@
 /*
-Copyright 2018 Samsung SDS Cloud Native Computing Team.
+Copyright 2019 Samsung SDS Cloud Native Computing Team.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -53,6 +53,8 @@ func (f *genericInformer) Lister() cache.GenericLister {
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
 	// Group=cma.sds.samsung.com, Version=v1alpha1
+	case v1alpha1.SchemeGroupVersion.WithResource("sdsappbundles"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Cma().V1alpha1().SDSAppBundles().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("sdsapplications"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Cma().V1alpha1().SDSApplications().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("sdsclusters"):

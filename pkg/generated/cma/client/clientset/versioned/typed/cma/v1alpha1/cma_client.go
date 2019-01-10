@@ -1,5 +1,5 @@
 /*
-Copyright 2018 Samsung SDS Cloud Native Computing Team.
+Copyright 2019 Samsung SDS Cloud Native Computing Team.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import (
 
 type CmaV1alpha1Interface interface {
 	RESTClient() rest.Interface
+	SDSAppBundlesGetter
 	SDSApplicationsGetter
 	SDSClustersGetter
 	SDSPackageManagersGetter
@@ -35,6 +36,10 @@ type CmaV1alpha1Interface interface {
 // CmaV1alpha1Client is used to interact with features provided by the cma.sds.samsung.com group.
 type CmaV1alpha1Client struct {
 	restClient rest.Interface
+}
+
+func (c *CmaV1alpha1Client) SDSAppBundles(namespace string) SDSAppBundleInterface {
+	return newSDSAppBundles(c, namespace)
 }
 
 func (c *CmaV1alpha1Client) SDSApplications(namespace string) SDSApplicationInterface {

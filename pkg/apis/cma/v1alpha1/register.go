@@ -14,6 +14,8 @@ const (
 	SDSPackageManagerResourceKind   = "SDSPackageManager"
 	SDSPackageManagerResourcePlural = "sdspackagemanagers"
 	groupName                       = "cma.sds.samsung.com"
+	SDSAppBundleResourceKind        = "SDSAppBundle"
+	SDSAppBundleResourcePlural      = "sdsappbundles"
 )
 
 var (
@@ -24,6 +26,7 @@ var (
 	SDSClusterCRDName        = SDSClusterResourcePlural + "." + groupName
 	SDSApplicationCRDName    = SDSApplicationResourcePlural + "." + groupName
 	SDSPackageManagerCRDName = SDSPackageManagerResourcePlural + "." + groupName
+	SDSAppBundleCRDName      = SDSAppBundleResourcePlural + "." + groupName
 )
 
 // addKnownTypes adds the set of types defined in this package to the supplied scheme.

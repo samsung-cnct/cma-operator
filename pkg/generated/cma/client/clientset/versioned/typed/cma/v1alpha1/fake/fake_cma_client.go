@@ -1,5 +1,5 @@
 /*
-Copyright 2018 Samsung SDS Cloud Native Computing Team.
+Copyright 2019 Samsung SDS Cloud Native Computing Team.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,6 +26,10 @@ import (
 
 type FakeCmaV1alpha1 struct {
 	*testing.Fake
+}
+
+func (c *FakeCmaV1alpha1) SDSAppBundles(namespace string) v1alpha1.SDSAppBundleInterface {
+	return &FakeSDSAppBundles{c, namespace}
 }
 
 func (c *FakeCmaV1alpha1) SDSApplications(namespace string) v1alpha1.SDSApplicationInterface {
