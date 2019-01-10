@@ -527,7 +527,14 @@ func schema_pkg_apis_cma_v1alpha1_SDSAppBundleSpec(ref common.ReferenceCallback)
 							Format:      "",
 						},
 					},
-					"sdspackagemanagerref": {
+					"namespace": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The Namespace on the management cluster to install the bundle",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"sdspackagemanagerspec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "What Package Manager to create for all applications in this bundle",
 							Ref:         ref("github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1.SDSPackageManagerSpec"),
@@ -575,7 +582,7 @@ func schema_pkg_apis_cma_v1alpha1_SDSAppBundleSpec(ref common.ReferenceCallback)
 						},
 					},
 				},
-				Required: []string{"name", "sdspackagemanagerref", "sdsapplicationspec", "autoinstall", "providers", "k8sversions"},
+				Required: []string{"name", "namespace", "sdspackagemanagerspec", "sdsapplicationspec", "autoinstall", "providers", "k8sversions"},
 			},
 		},
 		Dependencies: []string{

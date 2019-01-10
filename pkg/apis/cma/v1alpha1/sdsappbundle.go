@@ -41,8 +41,10 @@ type SDSAppBundle struct {
 type SDSAppBundleSpec struct {
 	// What is the AppBundle release's name
 	Name string `json:"name"`
+	// The Namespace on the management cluster to install the bundle
+	Namespace string `json:"namespace"`
 	// What Package Manager to create for all applications in this bundle
-	PackageManager SDSPackageManagerSpec `json:"sdspackagemanagerref"`
+	PackageManager SDSPackageManagerSpec `json:"sdspackagemanagerspec"`
 	// What Applications to create for this bundle
 	Applications []SDSApplicationSpec `json:"sdsapplicationspec"`
 	// try to install automatically on every cluster
