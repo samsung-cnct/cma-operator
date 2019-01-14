@@ -21,6 +21,7 @@ type ClusterMessage struct {
 }
 
 type ClusterDataPayload struct {
+	Bearertoken      string `json:"bearertoken"`
 	Kubeconfig       string `json:"kube_config"`
 	ClusterStatus    string `json:"cluster_status"`
 	CreationDateTime string `json:"creation_datetime"`

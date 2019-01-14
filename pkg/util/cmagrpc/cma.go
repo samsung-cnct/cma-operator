@@ -65,10 +65,11 @@ func (a *Client) GetCluster(input GetClusterInput) (GetClusterOutput, error) {
 		return GetClusterOutput{}, err
 	}
 	output := GetClusterOutput{
-		ID:         result.Cluster.Id,
-		Name:       result.Cluster.Name,
-		Status:     result.Cluster.Status.String(),
-		Kubeconfig: result.Cluster.Kubeconfig,
+		ID:          result.Cluster.Id,
+		Name:        result.Cluster.Name,
+		Status:      result.Cluster.Status.String(),
+		Kubeconfig:  result.Cluster.Kubeconfig,
+		Bearertoken: result.Cluster.Bearertoken,
 	}
 	return output, nil
 }
