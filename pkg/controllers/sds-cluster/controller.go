@@ -269,12 +269,6 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 	if freshCopy.Annotations[ClusterCallbackURLAnnotation] != "" {
 		// We need to notify someone that the cluster is now ready (again)
 
-		dataPayload, _ := json.Marshal(sdscallback.ClusterDataPayload{
-			Kubeconfig:       clusterInfo.Kubeconfig,
-			ClusterStatus:    clusterInfo.Status,
-			CreationDateTime: string(freshCopy.ObjectMeta.CreationTimestamp.Unix()),
-		})
-
 		// // check if logging package manager exists
 		clusterLoggingPackageManagerName := LoggingPackageManagerName + "-" + clusterName
 		_, err := c.client.CmaV1alpha1().SDSPackageManagers(viper.GetString(KubernetesNamespaceViperVariableName)).Get(clusterLoggingPackageManagerName, v1.GetOptions{})
@@ -582,6 +576,13 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 			logger.Errorf("unable to create sds token, error message: %s", err)
 		}
 		// End bearer token service account
+
+		dataPayload, _ := json.Marshal(sdscallback.ClusterDataPayload{
+			Bearertoken:      clusterInfo.Bearertoken,
+			Kubeconfig:       clusterInfo.Kubeconfig,
+			ClusterStatus:    clusterInfo.Status,
+			CreationDateTime: string(freshCopy.ObjectMeta.CreationTimestamp.Unix()),
+		})
 
 		// Do Stuff here
 		message := &sdscallback.ClusterMessage{

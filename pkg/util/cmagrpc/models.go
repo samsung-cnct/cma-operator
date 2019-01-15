@@ -6,8 +6,9 @@ type GetClusterInput struct {
 }
 
 type GetClusterOutput struct {
-	ID         string
-	Name       string
-	Status     string
-	Kubeconfig string
+	ID          string
+	Name        string
+	Status      string
+	Kubeconfig  string
+	Bearertoken string
 }
