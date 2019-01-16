@@ -267,7 +267,12 @@ func (c *SDSClusterController) waitForClusterReady(cluster *api.SDSCluster) {
 func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInfo cmagrpc.GetClusterOutput) bool {
 	freshCopy, err := c.client.CmaV1alpha1().SDSClusters(viper.GetString(KubernetesNamespaceViperVariableName)).Get(clusterName, v1.GetOptions{})
 	if freshCopy.Annotations[ClusterCallbackURLAnnotation] != "" {
-		// We need to notify someone that the cluster is now ready (again)
+
+		// check all SDSAppBundles
+		bundleErr := c.checkBundles(freshCopy)
+		if bundleErr != nil {
+			logger.Errorf("something bad happened when checking SDSAppBundles for cluster -->%s<-- error: %s", clusterName, err)
+		}
 
 		// // check if logging package manager exists
 		clusterLoggingPackageManagerName := LoggingPackageManagerName + "-" + clusterName
@@ -553,7 +558,7 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 
 		_, err = k8sutil.CreateExternalService(
 			k8sutil.GenerateExternalService(clusterApiEndpointServiceName, apiEndpoint),
-				freshCopy, nil)
+			freshCopy, nil)
 		if err != nil {
 			logger.Errorf("something bad happened when creating the service for cluster -->%s<-- error: %s", clusterName, err)
 		}
@@ -561,7 +566,7 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 		clusterApiEndpointIngressName := ApiEndpointIngressName + "-" + clusterName
 		_, err = k8sutil.CreateIngress(
 			k8sutil.GenerateIngress(clusterApiEndpointIngressName, clusterName, clusterApiEndpointServiceName),
-				freshCopy, nil)
+			freshCopy, nil)
 		if err != nil {
 			logger.Errorf("something bad happened when creating the ingress for cluster -->%s<-- error: %s", clusterName, err)
 		}
@@ -577,6 +582,7 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 		}
 		// End bearer token service account
 
+		// We need to notify someone that the cluster is now ready (again)
 		dataPayload, _ := json.Marshal(sdscallback.ClusterDataPayload{
 			Bearertoken:      clusterInfo.Bearertoken,
 			Kubeconfig:       clusterInfo.Kubeconfig,

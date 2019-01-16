@@ -44,15 +44,13 @@ type SDSAppBundleSpec struct {
 	// The Namespace on the management cluster to install the bundle
 	Namespace string `json:"namespace"`
 	// What Package Manager to create for all applications in this bundle
-	PackageManager SDSPackageManagerSpec `json:"sdspackagemanagerspec"`
+	PackageManager SDSPackageManagerSpec `json:"packagemanager"`
 	// What Applications to create for this bundle
-	Applications []SDSApplicationSpec `json:"sdsapplicationspec"`
-	// try to install automatically on every cluster
-	AutoInstall bool `json:"autoinstall"`
+	Applications []SDSApplicationSpec `json:"applications"`
 	// providers to install on
 	Providers []string `json:"providers"`
 	// Kubernetes version and higher to install on
-	K8sVersions string `json:"k8sversions"`
+	K8sVersion string `json:"k8sversion"`
 }
 
 // The status of an application bundle object
