@@ -66,7 +66,7 @@ func GenerateSDSApplicationCRD() apiextensionsv1beta1.CustomResourceDefinition {
 	return crd
 }
 
-// GenerateSDSApplicationCRD creates the SDSApplication CRD object
+// GenerateSDSAppBundleCRD creates the SDSAppBundle CRD object
 func GenerateSDSAppBundleCRD() apiextensionsv1beta1.CustomResourceDefinition {
 	crd := apiextensionsv1beta1.CustomResourceDefinition{
 		ObjectMeta: metav1.ObjectMeta{
