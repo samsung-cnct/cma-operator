@@ -4,6 +4,7 @@ import (
 	api "github.com/samsung-cnct/cma-operator/pkg/apis/cma/v1alpha1"
 	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtimeSchema "k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // checkBundles
@@ -81,6 +82,16 @@ func (c *SDSClusterController) createBundlePackageManager(bundle *api.SDSAppBund
 		bundlePackageManager.Name = bundlePackageManagerName
 		bundlePackageManager.Namespace = bundle.Spec.Namespace
 
+		// set owner reference
+		bundlePackageManager.OwnerReferences = []v1.OwnerReference{
+			*v1.NewControllerRef(bundle,
+				runtimeSchema.GroupVersionKind{
+					Group: api.SchemeGroupVersion.Group,
+					Version: api.SchemeGroupVersion.Version,
+					Kind: "SDSAppBundle",
+				}),
+		}
+
 		newBundlePackageManager, err := c.client.CmaV1alpha1().SDSPackageManagers(viper.GetString(KubernetesNamespaceViperVariableName)).Create(bundlePackageManager)
 		if err != nil {
 			logger.Errorf("something bad happened when creating -->%s<-- bundle package manager for cluster -->%s<--, error: %s", bundle.Name, cluster.Name, err)
@@ -124,6 +135,17 @@ func (c *SDSClusterController) createBundleApplications(bundle *api.SDSAppBundle
 			}
 			sdsApplication.Name = sdsApplicationName
 			sdsApplication.Namespace = viper.GetString(KubernetesNamespaceViperVariableName)
+
+			// set owner reference
+			sdsApplication.OwnerReferences = []v1.OwnerReference{
+				*v1.NewControllerRef(bundle,
+					runtimeSchema.GroupVersionKind{
+						Group: api.SchemeGroupVersion.Group,
+						Version: api.SchemeGroupVersion.Version,
+						Kind: "SDSAppBundle",
+					}),
+			}
+
 			newSDSApplication, err := c.client.CmaV1alpha1().SDSApplications(viper.GetString(KubernetesNamespaceViperVariableName)).Create(sdsApplication)
 			if err != nil {
 				logger.Errorf("something bad happened when creating -->%s<-- bundle application -->%s<-- for cluster -->%s<--, error: %s", bundle.Name, sdsApplicationName, cluster.Name, err)
