@@ -31,59 +31,59 @@ import (
 	cache "k8s.io/client-go/tools/cache"
 )
 
-// SDSPackageManagerInformer provides access to a shared informer and lister for
-// SDSPackageManagers.
-type SDSPackageManagerInformer interface {
+// SDSAppBundleInformer provides access to a shared informer and lister for
+// SDSAppBundles.
+type SDSAppBundleInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.SDSPackageManagerLister
+	Lister() v1alpha1.SDSAppBundleLister
 }
 
-type sDSPackageManagerInformer struct {
+type sDSAppBundleInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
 	tweakListOptions internalinterfaces.TweakListOptionsFunc
 	namespace        string
 }
 
-// NewSDSPackageManagerInformer constructs a new informer for SDSPackageManager type.
+// NewSDSAppBundleInformer constructs a new informer for SDSAppBundle type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewSDSPackageManagerInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredSDSPackageManagerInformer(client, namespace, resyncPeriod, indexers, nil)
+func NewSDSAppBundleInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
+	return NewFilteredSDSAppBundleInformer(client, namespace, resyncPeriod, indexers, nil)
 }
 
-// NewFilteredSDSPackageManagerInformer constructs a new informer for SDSPackageManager type.
+// NewFilteredSDSAppBundleInformer constructs a new informer for SDSAppBundle type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewFilteredSDSPackageManagerInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
+func NewFilteredSDSAppBundleInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.CmaV1alpha1().SDSPackageManagers(namespace).List(options)
+				return client.CmaV1alpha1().SDSAppBundles(namespace).List(options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.CmaV1alpha1().SDSPackageManagers(namespace).Watch(options)
+				return client.CmaV1alpha1().SDSAppBundles(namespace).Watch(options)
 			},
 		},
-		&cma_v1alpha1.SDSPackageManager{},
+		&cma_v1alpha1.SDSAppBundle{},
 		resyncPeriod,
 		indexers,
 	)
 }
 
-func (f *sDSPackageManagerInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredSDSPackageManagerInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+func (f *sDSAppBundleInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
+	return NewFilteredSDSAppBundleInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
 }
 
-func (f *sDSPackageManagerInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&cma_v1alpha1.SDSPackageManager{}, f.defaultInformer)
+func (f *sDSAppBundleInformer) Informer() cache.SharedIndexInformer {
+	return f.factory.InformerFor(&cma_v1alpha1.SDSAppBundle{}, f.defaultInformer)
 }
 
-func (f *sDSPackageManagerInformer) Lister() v1alpha1.SDSPackageManagerLister {
-	return v1alpha1.NewSDSPackageManagerLister(f.Informer().GetIndexer())
+func (f *sDSAppBundleInformer) Lister() v1alpha1.SDSAppBundleLister {
+	return v1alpha1.NewSDSAppBundleLister(f.Informer().GetIndexer())
 }

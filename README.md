@@ -53,3 +53,76 @@ All new managed clusters will be created with an [ingress](https://kubernetes.io
 2. Using the "bearertoken" from the output above you can now make api calls to the managed cluster:
     * example:
     `curl https://<ProxyDNSname>/<clusterName>/api/v1/<API path> -H "Authorization: Bearer <bearerToken>" [--insecure]`
+
+#### Custom Resources
+* SDSClusters
+* SDSPackageManagers
+* SDSApplications
+* SDSAppBundles
+
+
+#### How to create new Custom Resources in this repo:
+
+
+#### How to test this repo:
+1. run cluster-manager-api (see repo for details)
+2. confirm your `kubectl config current-context` is pointing to the cluster you want to test with (ex: minikube)
+3. run the following command from the root of the cma-operator directory 
+```
+CMAOPERATOR_CMA_ENDPOINT=localhost:9050 CMAOPERATOR_CMA_INSECURE=true go run cmd/cma-operator/main.go
+```
+* note the environment variables are pointing to the location of the cluster-manager-api from step 1. 
+
+Additional flags available: (add to the end of command above)
+* proxy test: `--cma-api-proxy sample.example.com`
+
+### How to create a SDSAppBundle:
+
+SDSAppBundles are a way to define what helm charts get installed on managed clusters automatically on cluster creation.
+
+The current parameter to define what type of cluster to install on is based on the "Provider". 
+This can be either one or more provider or **empty** for all providers.
+
+`providers: [ aws, azure, vmware, ssh ]`
+
+example yaml for creating a bundle:
+
+```yaml
+   apiVersion: cma.sds.samsung.com/v1alpha1
+   kind: SDSAppBundle
+   metadata:
+     name: ingress-controller-bundle
+     namespace: default
+   spec:
+     applications:
+     - chart:
+         chartName: nginx-ingress
+         repository:
+           name: charts
+           url: https://github.com/helm/charts/stable
+         version: 1.1.4
+       name: sample-ingress-controller
+       namespace: default
+       packageManager:
+         name: ingress-tiller
+       values: |
+        controller.metrics.enabled=true,
+        controller.stats.enabled=true,
+     k8sversion: 1.10.6
+     name: ingress-controller-bundle
+     namespace: default
+     packagemanager:
+       image: gcr.io/kubernetes-helm/tiller
+       name: ingress-tiller
+       namespace: default
+       permissions:
+         clusterWide: false
+         namespaces:
+         - default
+       serviceAccount:
+         name: ingress-sa
+         namespace: default
+       version: v2.11.0
+     providers: [ 'aws', 'azure' ]
+```
+
