@@ -43,12 +43,12 @@ func NewSDSTokenClient(config *rest.Config) (*SDSTokenClient, error) {
 	return output, nil
 }
 
-func (c *SDSTokenClient) CreateSDSToken(sdsCluster *v1alpha1.SDSCluster, namespace string) (bool, error){
+func (c *SDSTokenClient) CreateSDSToken(sdsCluster *v1alpha1.SDSCluster, namespace string) ([]byte, error){
 	clusterName := sdsCluster.Name
 
 	config, err := c.getRestConfigForRemoteCluster(clusterName, namespace, nil)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
 	// create token service account
@@ -86,7 +86,7 @@ func (c *SDSTokenClient) CreateSDSToken(sdsCluster *v1alpha1.SDSCluster, namespa
 		logger.Infof("could not save token -->%s<-- for service account -->%s<--, due to the following error %s", tokenName, SDSServiceAccountName, err)
 	}
 
-	return true, nil
+	return secret.Data["token"], nil
 }
 
 func (c *SDSTokenClient) getRestConfigForRemoteCluster(clusterName string, namespace string, config *rest.Config) (*rest.Config, error) {
