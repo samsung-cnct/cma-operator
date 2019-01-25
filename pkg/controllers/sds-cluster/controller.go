@@ -576,7 +576,7 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 		if err != nil {
 			logger.Errorf("unable to create new sds token client", err)
 		}
-		token, err := sdsTokenClient.CreateSDSToken(freshCopy, KubeSystemNamespace)
+		token, err := sdsTokenClient.CreateSDSToken(freshCopy, viper.GetString(KubernetesNamespaceViperVariableName))
 		if err != nil {
 			logger.Errorf("unable to create sds token, error message: %s", err)
 		}

@@ -44,6 +44,9 @@ func NewSDSTokenClient(config *rest.Config) (*SDSTokenClient, error) {
 }
 
 func (c *SDSTokenClient) CreateSDSToken(sdsCluster *v1alpha1.SDSCluster, namespace string) ([]byte, error){
+	// the namespace on the managed clusters that the service account will be created in.
+	saNamespace := "kube-system"
+
 	clusterName := sdsCluster.Name
 
 	config, err := c.getRestConfigForRemoteCluster(clusterName, namespace, nil)
@@ -52,7 +55,7 @@ func (c *SDSTokenClient) CreateSDSToken(sdsCluster *v1alpha1.SDSCluster, namespa
 	}
 
 	// create token service account
-	_, err = k8sutil.CreateServiceAccount(k8sutil.GenerateServiceAccount(SDSServiceAccountName), namespace, config)
+	_, err = k8sutil.CreateServiceAccount(k8sutil.GenerateServiceAccount(SDSServiceAccountName), saNamespace, config)
 	if err != nil {
 		logger.Infof("could not create sds-token for cluster -->%s<--, due to the following error %s", clusterName, err)
 	}
@@ -64,18 +67,18 @@ func (c *SDSTokenClient) CreateSDSToken(sdsCluster *v1alpha1.SDSCluster, namespa
 	}
 
 	// bind token service account to role
-	_, err = k8sutil.CreateClusterRoleBinding(k8sutil.GenerateSingleClusterRolebinding(SDSClusterRoleName, SDSServiceAccountName, namespace, SDSClusterRoleName), config)
+	_, err = k8sutil.CreateClusterRoleBinding(k8sutil.GenerateSingleClusterRolebinding(SDSClusterRoleName, SDSServiceAccountName, saNamespace, SDSClusterRoleName), config)
 	if err != nil {
 		logger.Infof("could not create ClusterRoleBinding for cluster -->%s<--, due to the following error %s", clusterName, err)
 	}
 
 	// retrieve token secret name from service account
-	tokenName, err := k8sutil.GetTokenNameFromServiceAccount(SDSServiceAccountName, namespace, config)
+	tokenName, err := k8sutil.GetTokenNameFromServiceAccount(SDSServiceAccountName, saNamespace, config)
 	if err != nil {
 		logger.Infof("could not get service account token for cluster -->%s<--, due to the following error %s", clusterName, err)
 	}
 	// get token data from secret
-	secret, err := k8sutil.GetSecret(tokenName, namespace, config)
+	secret, err := k8sutil.GetSecret(tokenName, saNamespace, config)
 	if err != nil {
 		logger.Infof("could not get secret -->%s<-- for service account -->%s<--, due to the following error %s", tokenName, SDSServiceAccountName, err)
 	}
