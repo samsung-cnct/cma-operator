@@ -5,7 +5,7 @@
 
 name: cma-operator
 image:
-   repo: quay.io/samsung_cnct/cma-operator:0.1.8
+   repo: quay.io/samsung_cnct/cma-operator:0.1.9
 cma:
    enabled: false
    endpoint: cma-grpc.cnct.io:443
