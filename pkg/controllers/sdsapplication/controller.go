@@ -92,14 +92,14 @@ func NewSDSApplicationController(config *rest.Config) (output *SDSApplicationCon
 	sharedInformer.AddEventHandlerWithResyncPeriod(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			key, err := cache.MetaNamespaceKeyFunc(obj)
-			logger.Infof("Add")
+			logger.Infof("add key %v", key)
 			if err == nil {
 				queue.Add(key)
 			}
 		},
 		UpdateFunc: func(old interface{}, new interface{}) {
 			key, err := cache.MetaNamespaceKeyFunc(new)
-			logger.Infof("Update")
+			logger.Infof("update key %v", key)
 			if err == nil {
 				queue.Add(key)
 			}
@@ -108,7 +108,7 @@ func NewSDSApplicationController(config *rest.Config) (output *SDSApplicationCon
 			// IndexerInformer uses a delta queue, therefore for deletes we have to use this
 			// key function.
 			key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
-			logger.Infof("Delete")
+			logger.Infof("delete key %v", key)
 			if err == nil {
 				queue.Add(key)
 			}
@@ -125,5 +125,5 @@ func NewSDSApplicationController(config *rest.Config) (output *SDSApplicationCon
 		cmaGRPCClient: cmaGRPCClient,
 	}
 	output.SetLogger()
-	return
+	return output, nil
 }
