@@ -12,4 +12,7 @@ cma:
    insecure: false
    apiProxyEndpoint: proxy.uswest1.cnct.io
    apiProxyTls: cma-api-proxy-tls
-
+bundles:
+   metrics: true
+   nginxk8smon: true
+   nodelabelbot5000: true

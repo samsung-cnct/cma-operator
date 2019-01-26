@@ -1,0 +1,170 @@
+---
+{{- if .Values.bundles.metrics }}
+apiVersion: cma.sds.samsung.com/v1alpha1
+kind: SDSAppBundle
+metadata:
+  name: metrics
+spec:
+  k8sversion: 1.10.6
+  name: metrics
+  packagemanager:
+    image: gcr.io/kubernetes-helm/tiller
+    name: pm-kube-system
+    namespace: kube-system
+    permissions:
+      clusterWide: true
+      namespaces:
+        - kube-system
+    serviceAccount:
+      name: pm-kube-system
+      namespace: kube-system
+    version: v2.11.0
+  providers: []
+  applications:
+    - name: metrics-server
+      namespace: kube-system
+      packageManager:
+        name: pm-kube-system
+      chart:
+        chartName: metrics-server
+        repository:
+          name: stable
+          url: https://kubernetes-charts.storage.googleapis.com
+      values: |
+        rbac:
+          create: true
+        serviceAccount:
+          create: true
+          name: metrics-server
+        apiService:
+          create: true
+        image:
+          repository: gcr.io/google_containers/metrics-server-amd64
+          tag: v0.3.1
+          pullPolicy: IfNotPresent
+        args:
+          - --logtostderr
+        resources: {}
+        nodeSelector: {}
+        tolerations: []
+        affinity: {}
+    - name: kube-state-metrics
+      namespace: kube-system
+      packageManager:
+        name: pm-kube-system
+      chart:
+        chartName: kube-state-metrics
+        repository:
+          name: stable
+          url: https://kubernetes-charts.storage.googleapis.com
+      values: |
+        prometheusScrape: true
+        image:
+          repository: quay.io/coreos/kube-state-metrics
+          tag: v1.4.0
+          pullPolicy: IfNotPresent
+        service:
+          port: 8080
+          # Default to clusterIP for backward compatibility
+          type: ClusterIP
+          nodePort: 0
+          loadBalancerIP: ''
+        rbac:
+          create: true
+        nodeSelector: {}
+        tolerations: []
+        podAnnotations: {}
+        collectors:
+          cronjobs: true
+          daemonsets: true
+          deployments: true
+          endpoints: true
+          horizontalpodautoscalers: true
+          jobs: true
+          limitranges: true
+          namespaces: true
+          nodes: true
+          persistentvolumeclaims: true
+          persistentvolumes: true
+          pods: true
+          replicasets: true
+          replicationcontrollers: true
+          resourcequotas: true
+          services: true
+          statefulsets: true
+    - name: nodelabelbot5000
+      namespace: kube-system
+      packageManager:
+        name: pm-kube-system
+      chart:
+        chartName: nodelabelbot5000
+        repository:
+          name: sds
+          url: https://charts.migrations.cnct.io
+{{- end }}
+---
+{{- if .Values.bundles.nginxk8smon }}
+apiVersion: cma.sds.samsung.com/v1alpha1
+kind: SDSAppBundle
+metadata:
+  name: nginx-k8smon
+spec:
+  k8sversion: 1.10.6
+  name: nginx-k8smon
+  packagemanager:
+    image: gcr.io/kubernetes-helm/tiller
+    name: pm-kube-system
+    namespace: kube-system
+    permissions:
+      clusterWide: true
+      namespaces:
+        - kube-system
+    serviceAccount:
+      name: pm-kube-system
+      namespace: kube-system
+    version: v2.11.0
+  providers: [ aws ]
+  applications:
+    - name: nginx-k8smon
+      namespace: kube-system
+      packageManager:
+        name: pm-kube-system
+      chart:
+        chartName: nginx-k8smon
+        repository:
+          name: sds
+          url: https://charts.migrations.cnct.io
+{{- end }}
+---
+{{- if .Values.bundles.nodelabelbot5000 }}
+apiVersion: cma.sds.samsung.com/v1alpha1
+kind: SDSAppBundle
+metadata:
+  name: nodelabelbot5000
+spec:
+  k8sversion: 1.10.6
+  name: nodelabelbot5000
+  packagemanager:
+    image: gcr.io/kubernetes-helm/tiller
+    name: pm-kube-system
+    namespace: kube-system
+    permissions:
+      clusterWide: true
+      namespaces:
+        - kube-system
+    serviceAccount:
+      name: pm-kube-system
+      namespace: kube-system
+    version: v2.11.0
+  providers: []
+  applications:
+    - name: nodelabelbot5000
+      namespace: kube-system
+      packageManager:
+        name: pm-kube-system
+      chart:
+        chartName: nodelabelbot5000
+        repository:
+          name: sds
+          url: https://charts.migrations.cnct.io
+{{- end }}
