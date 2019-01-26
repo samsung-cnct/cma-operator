@@ -108,11 +108,9 @@ apiVersion: cma.sds.samsung.com/v1alpha1
 kind: SDSAppBundle
 metadata:
   name: nginx-k8smon
-  namespace: default
 spec:
   k8sversion: 1.10.6
   name: nginx-k8smon
-  namespace: default
   packagemanager:
     image: gcr.io/kubernetes-helm/tiller
     name: pm-kube-system
