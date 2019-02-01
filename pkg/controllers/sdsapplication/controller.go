@@ -92,14 +92,12 @@ func NewSDSApplicationController(config *rest.Config) (output *SDSApplicationCon
 	sharedInformer.AddEventHandlerWithResyncPeriod(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			key, err := cache.MetaNamespaceKeyFunc(obj)
-			logger.Infof("add key %v", key)
 			if err == nil {
 				queue.Add(key)
 			}
 		},
 		UpdateFunc: func(old interface{}, new interface{}) {
 			key, err := cache.MetaNamespaceKeyFunc(new)
-			logger.Infof("update key %v", key)
 			if err == nil {
 				queue.Add(key)
 			}
