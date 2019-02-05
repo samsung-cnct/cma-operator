@@ -1,0 +1,40 @@
+name: debug
+description: debug cma-operator locally
+inputs:
+  srcDir:
+    dir:
+      default: .
+      description: directory containing the projects source code
+  CMAOPERATOR_CMA_ENDPOINT:
+    string:
+      description: cluster-manager-api endpoint
+      default: cma:9050
+  CMAOPERATOR_CMA_INSECURE:
+    boolean:
+      description: disable secure mode during local debug
+      default: true
+  kubeConfig:
+    file:
+      description: kind cluster kubeconfig (expecting it to be in the cluster-manager-api repo by default)
+      default: ../cluster-manager-api/kind-config-debug.yaml
+run:
+  container:
+    name: cma-operator
+    image: { ref: 'golang:1.10-alpine' }
+    dirs:
+      /go/src/github.com/samsung-cnct/cma-operator: $(srcDir)
+    files:
+      /kindClusterConfig.yaml: $(kubeConfig)
+    cmd:
+      - sh
+      - -ce
+      - |
+        mkdir /root/.kube
+        cat /kindClusterConfig.yaml | sed s/localhost/host.docker.internal/ > /root/.kube/config
+
+        echo "starting cma-operator debug"
+        go run cmd/cma-operator/main.go
+    envVars:
+      CMAOPERATOR_CMA_ENDPOINT:
+      CMAOPERATOR_CMA_INSECURE:
+    workDir: /go/src/github.com/samsung-cnct/cma-operator
