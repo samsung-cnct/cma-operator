@@ -18,17 +18,6 @@
   revision = "de5bf2ad457846296e2031421a34e2568e304e35"
 
 [[projects]]
-  digest = "1:f2e4b16bb90e9b9b7899623bf351df4c61c8b84eab7fe67da20e2970ee34220d"
-  name = "github.com/astaxie/beego"
-  packages = [
-    "orm",
-    "validation",
-  ]
-  pruneopts = "UT"
-  revision = "1b6edafc96ad27b6515fafeccd7339dda3e997b1"
-  version = "v1.11.1"
-
-[[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
@@ -104,22 +93,6 @@
   version = "v0.18.0"
 
 [[projects]]
-  digest = "1:ec6f9bf5e274c833c911923c9193867f3f18788c461f76f05f62bb1510e0ae65"
-  name = "github.com/go-sql-driver/mysql"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "72cd26f257d44c1114970e19afddcd812016007e"
-  version = "v1.4.1"
-
-[[projects]]
-  digest = "1:615643b442214e7a9bade98fa7d50ec072fd17bdc5c955daa194b32e73a532a8"
-  name = "github.com/gocraft/work"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "1d4117a214abff263b472043871c8666aedb716b"
-  version = "v0.5.1"
-
-[[projects]]
   digest = "1:b402bb9a24d108a9405a6f34675091b036c8b056aac843bf6ef2389a65c5cf48"
   name = "github.com/gogo/protobuf"
   packages = [
@@ -129,40 +102,6 @@
   pruneopts = "UT"
   revision = "4cbf7e384e768b4e01799441fdf2a706a5635ae7"
   version = "v1.2.0"
-
-[[projects]]
-  digest = "1:2a37d0b64afa02bd6b328ec46dd6add96908661c3a045a164c4211e09d7cef72"
-  name = "github.com/goharbor/harbor"
-  packages = [
-    "src/common",
-    "src/common/dao",
-    "src/common/models",
-    "src/common/utils",
-    "src/common/utils/log",
-    "src/jobservice/config",
-    "src/jobservice/errs",
-    "src/jobservice/logger/backend",
-    "src/jobservice/logger/getter",
-    "src/jobservice/logger/sweeper",
-    "src/jobservice/utils",
-  ]
-  pruneopts = "UT"
-  revision = "c380652540cb8061cff50f0ce2115fc6d217019b"
-  version = "v1.7.1"
-
-[[projects]]
-  digest = "1:692b29784ba0a25c33a77cb4c2594e2ffc1e72fc66e17e87503e03a29cb227c5"
-  name = "github.com/golang-migrate/migrate"
-  packages = [
-    ".",
-    "database",
-    "database/postgres",
-    "source",
-    "source/file",
-  ]
-  pruneopts = "UT"
-  revision = "4937cd088f7c7193ee59b319c1c2caa7482aae8e"
-  version = "v3.5.4"
 
 [[projects]]
   branch = "master"
@@ -188,17 +127,6 @@
   pruneopts = "UT"
   revision = "aa810b61a9c79d51363740d207bb46cf8e620ed5"
   version = "v1.2.0"
-
-[[projects]]
-  digest = "1:38ec74012390146c45af1f92d46e5382b50531247929ff3a685d2b2be65155ac"
-  name = "github.com/gomodule/redigo"
-  packages = [
-    "internal",
-    "redis",
-  ]
-  pruneopts = "UT"
-  revision = "9c11da706d9b7902c6da69c592f75637793fe121"
-  version = "v2.0.0"
 
 [[projects]]
   branch = "master"
@@ -323,17 +251,6 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:8ef506fc2bb9ced9b151dafa592d4046063d744c646c1bbe801982ce87e4bc24"
-  name = "github.com/lib/pq"
-  packages = [
-    ".",
-    "oid",
-  ]
-  pruneopts = "UT"
-  revision = "4ded0e9383f75c197b3a2aaa6d590ac52df6fd79"
-  version = "v1.0.0"
-
-[[projects]]
   digest = "1:c568d7727aa262c32bdf8a3f7db83614f7af0ed661474b24588de635c20024c7"
   name = "github.com/magiconair/properties"
   packages = ["."]
@@ -352,14 +269,6 @@
   ]
   pruneopts = "UT"
   revision = "60711f1a8329503b04e1c88535f419d0bb440bff"
-
-[[projects]]
-  digest = "1:4a49346ca45376a2bba679ca0e83bec949d780d4e927931317904bad482943ec"
-  name = "github.com/mattn/go-sqlite3"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "c7c4067b79cc51e6dfdcef5c702e74b1e0fa7c75"
-  version = "v1.10.0"
 
 [[projects]]
   digest = "1:53bc4cd4914cd7cd52139990d5170d6dc99067ae31c56530621b18b35fc30318"
@@ -408,14 +317,6 @@
   pruneopts = "UT"
   revision = "5f041e8faa004a95c88a202771f4cc3e991971e6"
   version = "v2.0.1"
-
-[[projects]]
-  digest = "1:ed615c5430ecabbb0fb7629a182da65ecee6523900ac1ac932520860878ffcad"
-  name = "github.com/robfig/cron"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "b41be1df696709bb6395fe435af20370037c0b4c"
-  version = "v1.1"
 
 [[projects]]
   branch = "master"
@@ -485,21 +386,10 @@
   version = "v1.3.1"
 
 [[projects]]
-  digest = "1:64702b63ed40242b5d5e1a5a92caab75637bc8212d6b785cf85602e09f163dee"
-  name = "github.com/vmware/harbor"
-  packages = ["src/jobservice/logger"]
-  pruneopts = "UT"
-  revision = "c380652540cb8061cff50f0ce2115fc6d217019b"
-  version = "v1.7.1"
-
-[[projects]]
   branch = "master"
-  digest = "1:9ff2b9f8d4e47013a213b9ea0d850ed787c51f5eab2038842d82397ad85a19c1"
+  digest = "1:38f553aff0273ad6f367cb0a0f8b6eecbaef8dc6cb8b50e57b6a81c1d5b1e332"
   name = "golang.org/x/crypto"
-  packages = [
-    "pbkdf2",
-    "ssh/terminal",
-  ]
+  packages = ["ssh/terminal"]
   pruneopts = "UT"
   revision = "ff983b9c42bc9fbf91556e191cc8efb585c16908"
 
@@ -575,10 +465,9 @@
   revision = "85acf8d2951cb2a3bde7632f9ff273ef0379bcbd"
 
 [[projects]]
-  digest = "1:9e29a0ec029d012437d88da3ccccf18adcdce069cab08d462056c2c6bb006505"
+  digest = "1:6f3bd49ddf2e104e52062774d797714371fac1b8bddfd8e124ce78e6b2264a10"
   name = "google.golang.org/appengine"
   packages = [
-    "cloudsql",
     "internal",
     "internal/base",
     "internal/datastore",
@@ -852,7 +741,6 @@
     "github.com/sirupsen/logrus",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
-    "github.com/vmware/harbor/src/jobservice/logger",
     "google.golang.org/grpc",
     "google.golang.org/grpc/credentials",
     "k8s.io/api/batch/v1",

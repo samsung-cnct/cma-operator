@@ -7,7 +7,6 @@ import (
 	"github.com/samsung-cnct/cma-operator/pkg/util/cmagrpc"
 	"github.com/samsung-cnct/cma-operator/pkg/util/helmutil"
 	"github.com/samsung-cnct/cma-operator/pkg/util/k8sutil"
-	"github.com/vmware/harbor/src/jobservice/logger"
 	"io/ioutil"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
@@ -26,6 +25,8 @@ type SDSTokenClient struct {
 }
 
 func NewSDSTokenClient(config *rest.Config) (*SDSTokenClient, error) {
+	SetLogger()
+
 	cmaGRPCClient, err := cmagrpc.CreateNewDefaultClient()
 	if err != nil {
 		return nil, err
@@ -44,6 +45,7 @@ func NewSDSTokenClient(config *rest.Config) (*SDSTokenClient, error) {
 }
 
 func (c *SDSTokenClient) CreateSDSToken(sdsCluster *v1alpha1.SDSCluster, namespace string) ([]byte, error){
+	SetLogger()
 	// the namespace on the managed clusters that the service account will be created in.
 	saNamespace := "kube-system"
 
@@ -93,6 +95,8 @@ func (c *SDSTokenClient) CreateSDSToken(sdsCluster *v1alpha1.SDSCluster, namespa
 }
 
 func (c *SDSTokenClient) getRestConfigForRemoteCluster(clusterName string, namespace string, config *rest.Config) (*rest.Config, error) {
+	SetLogger()
+
 	sdscluster, err := c.client.CmaV1alpha1().SDSClusters(namespace).Get(clusterName, v1.GetOptions{})
 	if err != nil {
 		glog.Errorf("Failed to retrieve SDSCluster -->%s<--, error was: %s", clusterName, err)
@@ -118,6 +122,8 @@ func (c *SDSTokenClient) getRestConfigForRemoteCluster(clusterName string, names
 }
 
 func retrieveClusterRestConfig(name string, kubeconfig string) (*rest.Config, error) {
+	SetLogger()
+
 	// Let's create a tempfile and line it up for removal
 	file, err := ioutil.TempFile(os.TempDir(), "cluster-kubeconfig")
 	defer os.Remove(file.Name())
