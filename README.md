@@ -65,6 +65,8 @@ All new managed clusters will be created with an [ingress](https://kubernetes.io
 
 
 #### How to test this repo:
+
+**Manually**:
 1. run cluster-manager-api (see repo for details)
 2. confirm your `kubectl config current-context` is pointing to the cluster you want to test with (ex: minikube)
 3. run the following command from the root of the cma-operator directory 
@@ -75,6 +77,18 @@ CMAOPERATOR_CMA_ENDPOINT=localhost:9050 CMAOPERATOR_CMA_INSECURE=true go run cmd
 
 Additional flags available: (add to the end of command above)
 * proxy test: `--cma-api-proxy sample.example.com`
+
+**Using Opctl**:
+
+requirements:
+1. docker
+2. [opctl](https://opctl.io/docs/getting-started/opctl.html#installation)
+
+steps:
+1. start cluster-manager-api using opctl (see repo for details)
+2. start debug op: `opctl run debug`
+
+This will start a container running `cma-operator` and referencing a [kind](https://github.com/kubernetes-sigs/kind) cluster created by the cluster-manager-api debug op
 
 ### How to create a SDSAppBundle:
 
