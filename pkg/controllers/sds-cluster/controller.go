@@ -253,6 +253,14 @@ func (c *SDSClusterController) waitForClusterReady(cluster *api.SDSCluster) {
 					// We successfully handled it, apparently
 					return
 				}
+			case pb.ClusterStatus_ERROR.String():
+				// set cluster status to failed
+				cluster.Status.Phase = api.ClusterPhaseFailed
+				_, err = c.client.CmaV1alpha1().SDSClusters(viper.GetString(KubernetesNamespaceViperVariableName)).Update(cluster)
+				if err != nil {
+					logger.Errorf("error updating cluster -->%s<-- status to failed, error message: %s", cluster.Name, err)
+				}
+				return
 			}
 		} else {
 			logger.Errorf("Error is %s for cluster %s", err, cluster.Name)
@@ -262,6 +270,13 @@ func (c *SDSClusterController) waitForClusterReady(cluster *api.SDSCluster) {
 	}
 	// We waited for the max number of retries, let's log it and bail
 	logger.Errorf("waited too long for cluster -->%s<-- to work right", cluster.Name)
+	// set cluster status to failed
+	cluster.Status.Phase = api.ClusterPhaseFailed
+	_, err = c.client.CmaV1alpha1().SDSClusters(viper.GetString(KubernetesNamespaceViperVariableName)).Update(cluster)
+	if err != nil {
+		logger.Errorf("error updating cluster -->%s<-- status to failed, error message: %s", cluster.Name, err)
+	}
+
 }
 
 func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInfo cmagrpc.GetClusterOutput) bool {
@@ -449,7 +464,25 @@ func (c *SDSClusterController) handleDeletedCluster(cluster *api.SDSCluster) {
 }
 
 func (c *SDSClusterController) handleFailedCluster(cluster *api.SDSCluster) {
+	// We need to notify someone that the cluster has failed
+	dataPayload, _ := json.Marshal(sdscallback.ClusterDataPayload{
+		ClusterStatus:    api.ClusterPhaseFailed,
+	})
 
+	message := &sdscallback.ClusterMessage{
+		State:        sdscallback.ClusterMessageStateCompleted,
+		StateText:    api.ClusterPhaseFailed,
+		ProgressRate: 0,
+		Data:         string(dataPayload),
+	}
+	sdscallback.DoCallback(cluster.Annotations[ClusterCallbackURLAnnotation], message)
+
+	// setting cluster status to error
+	cluster.Status.Phase = "Error"
+	_, err := c.client.CmaV1alpha1().SDSClusters(viper.GetString(KubernetesNamespaceViperVariableName)).Update(cluster)
+	if err != nil {
+		logger.Errorf("error updating cluster -->%s<-- status to 'Error', error message: %s", cluster.Name, err)
+	}
 }
 
 func (c *SDSClusterController) handleUpgradedCluster(cluster *api.SDSCluster) {
