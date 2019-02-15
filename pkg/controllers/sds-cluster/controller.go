@@ -470,7 +470,7 @@ func (c *SDSClusterController) handleFailedCluster(cluster *api.SDSCluster) {
 	})
 
 	message := &sdscallback.ClusterMessage{
-		State:        sdscallback.ClusterMessageStateCompleted,
+		State:        sdscallback.ClusterMessageStateFailed,
 		StateText:    api.ClusterPhaseFailed,
 		ProgressRate: 0,
 		Data:         string(dataPayload),
