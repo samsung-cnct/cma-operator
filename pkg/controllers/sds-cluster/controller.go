@@ -349,7 +349,7 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 						Name: LoggingApplicationName,
 						Repository: api.ChartRepository{
 							Name: LoggingApplicationName,
-							URL:  "https://charts.migrations.cnct.io",
+							URL:  "https://charts.cnct.io",
 						},
 					},
 					Values: "fluent-bit:\n name: fluent-bit\n cluster_uuid: " + uuidForLogging.String() + "\n elasticSearchHost: es.aws.uswest1.hybridstack.cnct.io\n elasticSearchPassword: changeme",
