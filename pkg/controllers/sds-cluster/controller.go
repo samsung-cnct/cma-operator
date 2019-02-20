@@ -25,6 +25,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
+	runtimeSchema "k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const (
@@ -358,6 +359,17 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 					},
 				},
 			}
+
+			// set owner reference
+			loggerApplication.OwnerReferences = []v1.OwnerReference{
+				*v1.NewControllerRef(freshCopy,
+					runtimeSchema.GroupVersionKind{
+						Group: api.SchemeGroupVersion.Group,
+						Version: api.SchemeGroupVersion.Version,
+						Kind: "SDSCluster",
+					}),
+			}
+
 			loggerApplication.Name = clusterLoggingApplicationName
 			loggerApplication.Namespace = viper.GetString(KubernetesNamespaceViperVariableName)
 			newLoggerApplication, err := c.client.CmaV1alpha1().SDSApplications(viper.GetString(KubernetesNamespaceViperVariableName)).Create(loggerApplication)
