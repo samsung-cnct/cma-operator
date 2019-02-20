@@ -98,7 +98,7 @@ prometheus:
 		PackageManager: packageManager.Name,
 		Chart: cma.Chart{
 			Name:       "sds/logging-client",
-			Repository: cma.ChartRepository{Name: "sds", URL: "https://charts.migrations.cnct.io"},
+			Repository: cma.ChartRepository{Name: "sds", URL: "https://charts.cnct.io"},
 		},
 		Values: `
 ## client-logging config.  ref: https://github.com/samsung-cnct/chart-logging-client/blob/master/charts/logging-client/values.yaml
@@ -116,7 +116,7 @@ fluent-bit:
 		PackageManager: packageManager.Name,
 		Chart: cma.Chart{
 			Name:       "stable/nginx-ingress",
-			Repository: cma.ChartRepository{Name: "sds", URL: "https://charts.migrations.cnct.io"},
+			Repository: cma.ChartRepository{Name: "sds", URL: "https://charts.cnct.io"},
 		},
 		Values: `
 ## nginx configuration
