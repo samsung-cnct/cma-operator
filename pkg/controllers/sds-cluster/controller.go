@@ -318,6 +318,16 @@ func (c *SDSClusterController) handleClusterReady(clusterName string, clusterInf
 				},
 			}
 
+			// set owner reference
+			loggingPackageManager.OwnerReferences = []v1.OwnerReference{
+				*v1.NewControllerRef(freshCopy,
+					runtimeSchema.GroupVersionKind{
+						Group: api.SchemeGroupVersion.Group,
+						Version: api.SchemeGroupVersion.Version,
+						Kind: "SDSCluster",
+					}),
+			}
+
 			loggingPackageManager.Name = loggingPackageManager.Spec.Name + "-" + clusterName
 			loggingPackageManager.Namespace = viper.GetString(KubernetesNamespaceViperVariableName)
 
