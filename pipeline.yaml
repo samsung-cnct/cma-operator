@@ -10,5 +10,13 @@ deployments:
     timeout: 600
     retries: 2
     release: cma-operator
+    test:
+      values:
+        - key: bundles.metrics
+          value: "false"
+        - key: bundles.nginxk8smon
+          value: "false"
+        - key: bundles.nodelabelbot5000
+          value: "false"
 prod:
   doDeploy: none
