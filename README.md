@@ -1,23 +1,42 @@
 # cma-operator
 Cluster Manager API Operator
 
-### How to use CMA API Proxy
+### Deployment
+The default way to deploy CMA-Operator is by the provided helm chart located in the `deployment/helm/cma-operator` directory.
 
-#### installation steps:
-1. deploy [nginx ingress controller](https://github.com/helm/charts/tree/master/stable/nginx-ingress)
-```bash
-helm install stable/nginx-ingress
-```
-2. Create Proxy DNS name pointing to nginx ingress controller load balancer name or IP, depending on your setup.
-3. Deploy helm chart for `cma-operator` updating the following entries in the values.yaml
-* `cma.enabled: true`
-* `cma.apiProxyEndpoint: <dns name from step 2 above>`
-* `cma.apiProxyTls: <name of tls secret` (if using secure) or  `cma.insecure: true` for insecure.
+#### Prerequisites
+1. [ingress controller](https://github.com/helm/charts/tree/master/stable/nginx-ingress)
 
-All new managed clusters will be created with an [ingress](https://kubernetes.io/docs/concepts/services-networking/ingress) and [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) service
 
-#### how to access clusters via ingress:
-1. retrieve the `bearertoken` from a GetCluster() call: 
+Optional steps when using CMA API Proxy:
+1. Create proxy DNS name pointing to nginx ingress controller load balancer name or IP, depending on your setup.
+1. Update the following entries in the values.yaml
+    * `cma.enabled: true`
+    * `cma.apiProxyEndpoint: <dns name from step above>`
+    * `cma.apiProxyTls: <name of tls secret` (if using secure) or  `cma.insecure: true` for insecure.
+    
+    All new managed clusters will be created with an [ingress](https://kubernetes.io/docs/concepts/services-networking/ingress) and [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) service
+
+#### install via [helm](https://helm.sh/docs/using_helm/#quickstart)
+1. Install helm chart without default bundles first:
+    ```bash
+    helm install deployments/helm/cma-operator --name cma-operator \
+        --set bundles.metrics=false \
+        --set bundles.nginxk8smon=false \
+        --set bundles.nodelabelbot5000=false
+    ```
+    *alternatively you can update `values.yaml`.
+    
+    After the `cma-operator` pods are running you can upgrade the helm release to include the bundles, see more on [SDSAppBundle](#How-to-create-a-SDSAppBundle).
+    ```bash
+    helm upgrade cma-operator deployments/helm/cma-operator \
+        --set bundles.metrics=true \
+        --set bundles.nginxk8smon=true \
+        --set bundles.nodelabelbot5000=true
+    ```
+
+#### Using the CMA API Proxy to access clusters (via ingress proxy):
+1. retrieve the `bearertoken` from a GetCluster() call at the CMA level: 
     * example output:
     ```
     {
