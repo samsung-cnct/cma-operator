@@ -1,23 +1,24 @@
-# cma-operator
-Cluster Manager API Operator
+# Cluster Manager API Operator (cma-operator)
+
+
 
 ### Deployment
 The default way to deploy CMA-Operator is by the provided helm chart located in the `deployment/helm/cma-operator` directory.
 
 #### Prerequisites
-1. [ingress controller](https://github.com/helm/charts/tree/master/stable/nginx-ingress)
+1. [Ingress Controller](https://github.com/helm/charts/tree/master/stable/nginx-ingress)
 
 
 Optional steps when using CMA API Proxy:
 1. Create proxy DNS name pointing to nginx ingress controller load balancer name or IP, depending on your setup.
-1. Update the following entries in the values.yaml
+1. Update the following entries in the `values.yaml`.
     * `cma.enabled: true`
     * `cma.apiProxyEndpoint: <dns name from step above>`
-    * `cma.apiProxyTls: <name of tls secret` (if using secure) or  `cma.insecure: true` for insecure.
+    * `cma.apiProxyTls: <name of tls secret>` (if using secure) or  `cma.insecure: true` for insecure.
     
-    All new managed clusters will be created with an [ingress](https://kubernetes.io/docs/concepts/services-networking/ingress) and [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) service
+    All new managed clusters will be created with an [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress) and [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) service.
 
-#### install via [helm](https://helm.sh/docs/using_helm/#quickstart)
+#### Install via [helm](https://helm.sh/docs/using_helm/#quickstart)
 1. Install helm chart without default bundles first:
     ```bash
     helm install deployments/helm/cma-operator --name cma-operator \
@@ -25,7 +26,7 @@ Optional steps when using CMA API Proxy:
         --set bundles.nginxk8smon=false \
         --set bundles.nodelabelbot5000=false
     ```
-    *alternatively you can update `values.yaml`.
+    *Alternatively you can update `values.yaml`.
     
     After the `cma-operator` pods are running you can upgrade the helm release to include the bundles, see more on [SDSAppBundle](#How-to-create-a-SDSAppBundle).
     ```bash
@@ -36,8 +37,9 @@ Optional steps when using CMA API Proxy:
     ```
 
 #### Using the CMA API Proxy to access clusters (via ingress proxy):
-1. retrieve the `bearertoken` from a GetCluster() call at the CMA level: 
-    * example output:
+1. Retrieve the `bearertoken` from a GetCluster() call at the CMA level:
+
+    *Example output:
     ```
     {
          "ok": true,
@@ -70,7 +72,7 @@ Optional steps when using CMA API Proxy:
     ```
 
 2. Using the "bearertoken" from the output above you can now make api calls to the managed cluster:
-    * example:
+    * Example:
     `curl https://<ProxyDNSname>/<clusterName>/api/v1/<API path> -H "Authorization: Bearer <bearerToken>" [--insecure]`
 
 #### Custom Resources
@@ -79,35 +81,31 @@ Optional steps when using CMA API Proxy:
 * SDSApplications
 * SDSAppBundles
 
-
-#### How to create new Custom Resources in this repo:
-
-
 #### How to test this repo:
 
 **Manually**:
-1. run cluster-manager-api (see repo for details)
-2. confirm your `kubectl config current-context` is pointing to the cluster you want to test with (ex: minikube)
-3. run the following command from the root of the cma-operator directory 
+1. Run cluster-manager-api (see repo for details)
+2. Confirm your `kubectl config current-context` is pointing to the cluster you want to test with (ex: minikube)
+3. Run the following command from the root of the cma-operator directory 
 ```
 CMAOPERATOR_CMA_ENDPOINT=localhost:9050 CMAOPERATOR_CMA_INSECURE=true go run cmd/cma-operator/main.go
 ```
-* note the environment variables are pointing to the location of the cluster-manager-api from step 1. 
+* Note the environment variables are pointing to the location of the cluster-manager-api from step 1. 
 
 Additional flags available: (add to the end of command above)
-* proxy test: `--cma-api-proxy sample.example.com`
+* Proxy test: `--cma-api-proxy sample.example.com`
 
 **Using Opctl**:
 
-requirements:
-1. docker
+Requirements:
+1. [docker](https://docs.docker.com/install/)
 2. [opctl](https://opctl.io/docs/getting-started/opctl.html#installation)
 
-steps:
-1. start cluster-manager-api using opctl (see repo for details)
-2. start debug op: `opctl run debug`
+Steps:
+1. Start cluster-manager-api using opctl (see repo for details).
+2. Start debug op: `opctl run debug`
 
-This will start a container running `cma-operator` and referencing a [kind](https://github.com/kubernetes-sigs/kind) cluster created by the cluster-manager-api debug op
+This will start a container running `cma-operator` and referencing a [kind](https://github.com/kubernetes-sigs/kind) cluster created by the cluster-manager-api debug op.
 
 ### How to create a SDSAppBundle:
 
@@ -118,7 +116,7 @@ This can be either one or more provider or **empty** for all providers.
 
 `providers: [ aws, azure, vmware, ssh ]`
 
-example yaml for creating a bundle:
+Example yaml for creating a bundle:
 
 ```yaml
    apiVersion: cma.sds.samsung.com/v1alpha1
