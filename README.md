@@ -1,6 +1,6 @@
 # Cluster Manager API Operator (cma-operator)
 
-`cma-operator` is responsible for managing the installation of applications and services on cluster created by [Cluster Manager API](). 
+`cma-operator` is responsible for managing the installation of applications and services on cluster created by [Cluster Manager API](https://github.com/samsung-cnct/cluster-manager-api). 
 `cma-operator` utilizing the below custom resources to manage these applications and comes with a set of default applications installed via the provided [SDSAppBundle](https://github.com/samsung-cnct/cma-operator/blob/master/deployments/helm/cma-operator/templates/sdsappbundles.yaml).
 
 #### Custom Resources
